@@ -1,0 +1,33 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreMessageDraftRequest;
+use App\Models\MessageDraft;
+use App\Models\StudentRequest;
+use App\Models\Tutor;
+use App\Services\AI\AiAssistant;
+
+class MessageDraftController extends Controller
+{
+    public function __invoke(StoreMessageDraftRequest $request, AiAssistant $aiAssistant)
+    {
+        $validated = $request->validated();
+        $studentRequest = StudentRequest::with(['subject', 'level'])->findOrFail($validated['student_request_id']);
+        $tutor = isset($validated['tutor_id']) ? Tutor::findOrFail($validated['tutor_id']) : null;
+        $draft = $aiAssistant->draftMessage($studentRequest, $tutor, $validated['audience'], $validated['channel'] ?? 'whatsapp');
+
+        $messageDraft = MessageDraft::create([
+            'student_request_id' => $studentRequest->id,
+            'tutor_id' => $tutor?->id,
+            'match_result_id' => $validated['match_result_id'] ?? null,
+            'audience' => $draft['audience'],
+            'channel' => $draft['channel'],
+            'body' => $draft['body'],
+            'generated_by' => $draft['generated_by'],
+        ]);
+
+        return response()->json(['data' => $messageDraft], 201);
+    }
+}
