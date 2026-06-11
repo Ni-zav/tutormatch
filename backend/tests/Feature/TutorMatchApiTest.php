@@ -196,6 +196,116 @@ class TutorMatchApiTest extends TestCase
         ])->assertForbidden();
     }
 
+    public function test_tutor_can_list_open_assignments_and_see_own_application_status(): void
+    {
+        $user = User::create([
+            'name' => 'Tutor',
+            'email' => 'mobile-tutor@example.test',
+            'password' => 'password',
+            'role' => 'tutor',
+        ]);
+        $token = $this->tokenFor($user);
+        [$studentRequest, $tutor] = $this->matchFixture(['user_id' => $user->id]);
+        $assignment = Assignment::create([
+            'student_request_id' => $studentRequest->id,
+            'title' => 'Sec 4 O-Level Chemistry in Bishan',
+            'status' => 'open',
+            'published_at' => now(),
+        ]);
+        $assignment->applications()->create([
+            'tutor_id' => $tutor->id,
+            'status' => 'applied',
+            'message' => 'Interested.',
+            'applied_at' => now(),
+        ]);
+
+        $this->withToken($token)
+            ->getJson('/api/assignments')
+            ->assertOk()
+            ->assertJsonPath('data.0.id', $assignment->id)
+            ->assertJsonPath('data.0.application_status', 'applied')
+            ->assertJsonPath('data.0.request.subject', 'Chemistry');
+    }
+
+    public function test_tutor_application_uses_authenticated_tutor_profile(): void
+    {
+        $user = User::create([
+            'name' => 'Tutor',
+            'email' => 'apply-tutor@example.test',
+            'password' => 'password',
+            'role' => 'tutor',
+        ]);
+        $token = $this->tokenFor($user);
+        [$studentRequest, $tutor] = $this->matchFixture(['user_id' => $user->id]);
+        $otherTutor = Tutor::create([
+            'name' => 'Other Tutor',
+            'tutor_type' => 'part_time',
+            'teaching_mode' => 'online',
+            'location' => 'Tampines',
+            'hourly_rate_min' => 30,
+            'hourly_rate_max' => 45,
+        ]);
+        $assignment = Assignment::create([
+            'student_request_id' => $studentRequest->id,
+            'title' => 'Sec 4 O-Level Chemistry in Bishan',
+            'status' => 'open',
+            'published_at' => now(),
+        ]);
+
+        $this->withToken($token)->postJson("/api/assignments/{$assignment->id}/applications", [
+            'tutor_id' => $otherTutor->id,
+            'message' => 'Available for a trial.',
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.tutor_id', $tutor->id);
+
+        $this->assertDatabaseMissing('applications', [
+            'assignment_id' => $assignment->id,
+            'tutor_id' => $otherTutor->id,
+        ]);
+    }
+
+    public function test_tutor_can_withdraw_own_application(): void
+    {
+        $user = User::create([
+            'name' => 'Tutor',
+            'email' => 'withdraw-tutor@example.test',
+            'password' => 'password',
+            'role' => 'tutor',
+        ]);
+        $token = $this->tokenFor($user);
+        [$studentRequest, $tutor] = $this->matchFixture(['user_id' => $user->id]);
+        $assignment = Assignment::create([
+            'student_request_id' => $studentRequest->id,
+            'title' => 'Sec 4 O-Level Chemistry in Bishan',
+            'status' => 'open',
+            'published_at' => now(),
+        ]);
+        $assignment->applications()->create([
+            'tutor_id' => $tutor->id,
+            'status' => 'applied',
+            'applied_at' => now(),
+        ]);
+
+        $this->withToken($token)
+            ->deleteJson("/api/assignments/{$assignment->id}/applications")
+            ->assertOk()
+            ->assertJsonPath('data.status', 'withdrawn');
+
+        $this->assertDatabaseHas('applications', [
+            'assignment_id' => $assignment->id,
+            'tutor_id' => $tutor->id,
+            'status' => 'withdrawn',
+        ]);
+
+        $this->withToken($token)
+            ->postJson("/api/assignments/{$assignment->id}/applications", [
+                'message' => 'Available again.',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.status', 'applied');
+    }
+
     private function tokenForCoordinator(): string
     {
         return $this->tokenFor(User::create([
@@ -217,7 +327,7 @@ class TutorMatchApiTest extends TestCase
         return $token;
     }
 
-    private function matchFixture(): array
+    private function matchFixture(array $tutorOverrides = []): array
     {
         $subject = Subject::create(['name' => 'Chemistry']);
         $level = Level::create(['name' => 'Sec 4 O-Level']);
@@ -232,7 +342,7 @@ class TutorMatchApiTest extends TestCase
             'urgency' => 'urgent',
             'schedule_notes' => 'Weekend mornings preferred',
         ]);
-        $tutor = Tutor::create([
+        $tutor = Tutor::create(array_merge([
             'name' => 'Daniel Lim',
             'tutor_type' => 'ex_moe',
             'teaching_mode' => 'hybrid',
@@ -241,7 +351,7 @@ class TutorMatchApiTest extends TestCase
             'hourly_rate_max' => 70,
             'acceptance_rate' => 0.8,
             'success_score' => 0.8,
-        ]);
+        ], $tutorOverrides));
 
         return [$studentRequest, $tutor];
     }

@@ -9,20 +9,49 @@ use App\Models\Assignment;
 
 class AssignmentApplicationController extends Controller
 {
-    public function __invoke(StoreApplicationRequest $request, Assignment $assignment)
+    public function store(StoreApplicationRequest $request, Assignment $assignment)
     {
-        $application = Application::query()->firstOrCreate(
-            [
-                'assignment_id' => $assignment->id,
-                'tutor_id' => $request->integer('tutor_id'),
-            ],
-            [
-                'status' => 'applied',
-                'message' => $request->input('message'),
-                'applied_at' => now(),
-            ]
-        );
+        $user = $request->user();
+        $tutorId = $user->role === 'tutor'
+            ? $user->tutor?->id
+            : $request->integer('tutor_id');
 
-        return response()->json(['data' => $application], $application->wasRecentlyCreated ? 201 : 200);
+        if (! $tutorId) {
+            return response()->json(['message' => 'Tutor profile is required to apply.'], 422);
+        }
+
+        $application = Application::query()->firstOrNew([
+            'assignment_id' => $assignment->id,
+            'tutor_id' => $tutorId,
+        ]);
+        $wasRecentlyCreated = ! $application->exists;
+        $application->fill([
+            'status' => 'applied',
+            'message' => $request->input('message', $application->message),
+            'applied_at' => now(),
+        ])->save();
+
+        return response()->json(['data' => $application], $wasRecentlyCreated ? 201 : 200);
+    }
+
+    public function destroy(StoreApplicationRequest $request, Assignment $assignment)
+    {
+        $user = $request->user();
+        $tutorId = $user->role === 'tutor'
+            ? $user->tutor?->id
+            : $request->integer('tutor_id');
+
+        if (! $tutorId) {
+            return response()->json(['message' => 'Tutor profile is required to withdraw.'], 422);
+        }
+
+        $application = Application::query()
+            ->where('assignment_id', $assignment->id)
+            ->where('tutor_id', $tutorId)
+            ->firstOrFail();
+
+        $application->update(['status' => 'withdrawn']);
+
+        return response()->json(['data' => $application]);
     }
 }

@@ -9,7 +9,7 @@ class StoreApplicationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'tutor_id' => ['required', 'exists:tutors,id'],
+            'tutor_id' => ['nullable', 'exists:tutors,id'],
             'message' => ['nullable', 'string', 'max:1000'],
         ];
     }

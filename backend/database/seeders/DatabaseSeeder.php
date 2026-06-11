@@ -37,7 +37,7 @@ class DatabaseSeeder extends Seeder
                 'role' => 'admin',
             ]
         );
-        User::updateOrCreate(
+        $demoTutorUser = User::updateOrCreate(
             ['email' => 'tutor@tutormatch.test'],
             [
                 'name' => 'Demo Tutor',
@@ -119,6 +119,10 @@ class DatabaseSeeder extends Seeder
             $subjectsPayload = $payload['subjects'];
             $slots = $payload['slots'];
             unset($payload['subjects'], $payload['slots']);
+
+            if ($payload['name'] === 'Daniel Lim') {
+                $payload['user_id'] = $demoTutorUser->id;
+            }
 
             $tutor = Tutor::updateOrCreate(['name' => $payload['name']], $payload);
 

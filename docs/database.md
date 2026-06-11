@@ -4,9 +4,9 @@ The local demo uses SQLite for speed. The schema uses Laravel migrations and por
 
 ## Tables
 
-- `users`: default Laravel user table, retained for future auth.
+- `users`: demo login table with role and hashed API token fields.
 - `subjects`, `levels`: normalized academic dimensions.
-- `tutors`: tutor profile, teaching mode, location, rates, experience, acceptance, and success signals.
+- `tutors`: tutor profile, optional linked user account, teaching mode, location, rates, experience, acceptance, and success signals.
 - `tutor_subjects`: tutor subject and level ability.
 - `tutor_availabilities`: schedule slots.
 - `student_requests`: parent/student request details.

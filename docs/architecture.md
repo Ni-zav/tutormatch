@@ -17,8 +17,8 @@ SQLite for local demo
 Portable schema for MySQL/PostgreSQL
 
 Expo Tutor Mini App
-  - Local mocked assignment feed
-  - Filters, detail, bulk apply mock
+  - Authenticated assignment feed
+  - Filters, detail, apply and withdraw interest actions
 ```
 
 ## Module Boundaries
@@ -30,7 +30,7 @@ Expo Tutor Mini App
 - `backend/app/Services/AI`: provider boundary and mock fallback.
 - `frontend/src/api`: typed API client.
 - `frontend/src/types`: shared response types used by the dashboard.
-- `mobile/App.tsx`: compact tutor-side assignment workflow using mocked data.
+- `mobile/App.tsx`: compact tutor-side assignment workflow backed by `/api/auth/login`, `/api/assignments`, and application submission.
 
 ## Production Tradeoffs
 

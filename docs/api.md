@@ -24,7 +24,9 @@ Most workflow routes require a bearer token from `POST /auth/login`. The local s
 | POST | `/requests/{id}/generate-matches` | Coordinator/admin generate deterministic matches |
 | GET | `/tutors` | Coordinator/admin paginated tutors |
 | GET | `/tutors/{id}` | Coordinator/admin tutor profile |
+| GET | `/assignments` | Admin/coordinator/tutor open assignment feed with current tutor application status |
 | POST | `/assignments/{id}/applications` | Admin/coordinator/tutor application submission |
+| DELETE | `/assignments/{id}/applications` | Admin/coordinator/tutor application withdrawal |
 | POST | `/matches/{id}/explain` | Coordinator/admin AI/mock match explanation |
 | PATCH | `/matches/{id}/workflow` | Coordinator/admin shortlist, outreach, and outcome status update |
 | POST | `/message-drafts` | Coordinator/admin AI/mock message draft |
@@ -98,3 +100,9 @@ Use the returned `data.token` as `Authorization: Bearer <token>`.
 ```
 
 Allowed match statuses are `recommended`, `shortlisted`, `accepted`, `rejected`, `confirmed`, `needs_follow_up`, and `closed`. Allowed outreach statuses are `not_contacted`, `drafted`, `contacted`, `responded`, and `no_response`.
+
+## Tutor Assignment Feed
+
+`GET /assignments` returns open published assignments. For tutor users, each row includes that tutor's current `application_status` when they have already applied.
+
+Tutor users do not need to send `tutor_id` when applying or withdrawing. If a tutor sends a different `tutor_id`, the API still uses the authenticated tutor profile.

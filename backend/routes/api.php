@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AssignmentApplicationController;
+use App\Http\Controllers\Api\AssignmentController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\HealthController;
@@ -18,6 +19,10 @@ Route::middleware('api.token:admin,coordinator,tutor')->group(function (): void 
     Route::post('/auth/logout', [AuthController::class, 'logout']);
 });
 
+Route::middleware('api.token:admin,coordinator,tutor')->group(function (): void {
+    Route::get('/assignments', [AssignmentController::class, 'index']);
+});
+
 Route::middleware('api.token:admin,coordinator')->group(function (): void {
     Route::get('/dashboard/summary', [DashboardController::class, 'summary']);
     Route::apiResource('requests', StudentRequestController::class)->only(['index', 'store', 'show']);
@@ -29,5 +34,7 @@ Route::middleware('api.token:admin,coordinator')->group(function (): void {
     Route::post('/message-drafts', MessageDraftController::class)->middleware('throttle:30,1');
 });
 
-Route::post('/assignments/{assignment}/applications', AssignmentApplicationController::class)
+Route::post('/assignments/{assignment}/applications', [AssignmentApplicationController::class, 'store'])
+    ->middleware('api.token:admin,coordinator,tutor');
+Route::delete('/assignments/{assignment}/applications', [AssignmentApplicationController::class, 'destroy'])
     ->middleware('api.token:admin,coordinator,tutor');

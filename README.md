@@ -71,7 +71,11 @@ npm install
 npm run start
 ```
 
-The mobile app uses local mock assignment data. It demonstrates the tutor-side assignment feed, filters, assignment detail, and bulk apply action without requiring the backend API.
+The mobile app logs in with the seeded tutor account, reads open assignments from the backend, and lets the tutor apply or withdraw interest. If the API runs somewhere else, start Expo with:
+
+```bash
+EXPO_PUBLIC_API_BASE_URL=http://127.0.0.1:8000/api npm run start
+```
 
 ## Verification
 
@@ -125,7 +129,9 @@ Current local verification:
 - `POST /api/requests/{id}/generate-matches`
 - `GET /api/tutors`
 - `GET /api/tutors/{id}`
+- `GET /api/assignments`
 - `POST /api/assignments/{id}/applications`
+- `DELETE /api/assignments/{id}/applications`
 - `POST /api/matches/{id}/explain`
 - `PATCH /api/matches/{id}/workflow`
 - `POST /api/message-drafts`
@@ -171,7 +177,7 @@ More detail is in:
 - Add privacy controls and prompt redaction before real AI provider use.
 - Tune scoring weights with placement and retention data.
 - Add WordPress intake integration for public request forms.
-- Build a fuller Expo tutor app for assignment feed, filters, detail, and bulk apply.
+- Build a fuller Expo tutor app for profile, availability, withdrawal, and status notifications.
 
 ## AI Configuration
 

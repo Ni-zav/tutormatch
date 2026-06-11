@@ -3,12 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Tutor extends Model
 {
     protected $fillable = [
         'name',
+        'user_id',
         'tutor_type',
         'teaching_mode',
         'location',
@@ -35,6 +37,11 @@ class Tutor extends Model
     public function tutorSubjects(): HasMany
     {
         return $this->hasMany(TutorSubject::class);
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 
     public function availabilities(): HasMany
