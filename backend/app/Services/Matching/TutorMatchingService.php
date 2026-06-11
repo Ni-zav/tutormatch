@@ -5,6 +5,7 @@ namespace App\Services\Matching;
 use App\Models\MatchResult;
 use App\Models\StudentRequest;
 use App\Models\Tutor;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
 class TutorMatchingService
@@ -13,9 +14,17 @@ class TutorMatchingService
     {
         $request->loadMissing(['subject', 'level']);
 
-        return Tutor::query()
+        $candidateTutors = $this->candidateQuery($request)
             ->with(['tutorSubjects.subject', 'tutorSubjects.level', 'availabilities'])
-            ->get()
+            ->get();
+
+        $candidateIds = $candidateTutors->pluck('id');
+        $request->matchResults()
+            ->when($candidateIds->isNotEmpty(), fn (Builder $query) => $query->whereNotIn('tutor_id', $candidateIds))
+            ->when($candidateIds->isEmpty(), fn (Builder $query) => $query)
+            ->delete();
+
+        return $candidateTutors
             ->map(function (Tutor $tutor) use ($request): MatchResult {
                 $score = $this->score($tutor, $request);
 
@@ -32,9 +41,47 @@ class TutorMatchingService
                     ]
                 )->load('tutor');
             })
-            ->sortByDesc('total_score')
+            ->sort(function (MatchResult $a, MatchResult $b): int {
+                return ($b->total_score <=> $a->total_score)
+                    ?: ($b->tutor->success_score <=> $a->tutor->success_score)
+                    ?: ($b->tutor->acceptance_rate <=> $a->tutor->acceptance_rate)
+                    ?: ($a->tutor_id <=> $b->tutor_id);
+            })
             ->take($limit)
             ->values();
+    }
+
+    public function candidateQuery(StudentRequest $request): Builder
+    {
+        return Tutor::query()
+            ->where('is_active', true)
+            ->whereHas('tutorSubjects', function (Builder $query) use ($request): void {
+                $query->where('subject_id', $request->subject_id)
+                    ->where(function (Builder $query) use ($request): void {
+                        $query->whereNull('level_id')
+                            ->orWhere('level_id', $request->level_id);
+                    });
+            })
+            ->where(function (Builder $query) use ($request): void {
+                if ($request->teaching_mode === 'online') {
+                    $query->whereIn('teaching_mode', ['online', 'hybrid']);
+
+                    return;
+                }
+
+                $query->where(function (Builder $query) use ($request): void {
+                    $query->where('location', $request->location)
+                        ->whereIn('teaching_mode', [$request->teaching_mode, 'hybrid']);
+                })->orWhere('teaching_mode', 'hybrid');
+            })
+            ->where('hourly_rate_min', '<=', $request->budget_max)
+            ->where('hourly_rate_max', '>=', $request->budget_min ?? 0)
+            ->when($request->requested_day_of_week && $request->requested_time_block, function (Builder $query) use ($request): void {
+                $query->whereHas('availabilities', function (Builder $query) use ($request): void {
+                    $query->where('day_of_week', $request->requested_day_of_week)
+                        ->where('time_block', $request->requested_time_block);
+                });
+            });
     }
 
     public function score(Tutor $tutor, StudentRequest $request): MatchScoreBreakdown

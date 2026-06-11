@@ -19,6 +19,7 @@ class Tutor extends Model
         'acceptance_rate',
         'success_score',
         'bio',
+        'is_active',
     ];
 
     protected function casts(): array
@@ -27,6 +28,7 @@ class Tutor extends Model
             'rating' => 'float',
             'acceptance_rate' => 'float',
             'success_score' => 'float',
+            'is_active' => 'boolean',
         ];
     }
 

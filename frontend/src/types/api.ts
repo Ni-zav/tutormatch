@@ -34,6 +34,7 @@ export type Tutor = {
   rating: number | null;
   acceptance_rate: number;
   success_score: number;
+  is_active: boolean;
   bio: string | null;
   subjects?: { subject: string; level: string | null; proficiency: number }[];
   availabilities?: { day_of_week: string; time_block: string }[];

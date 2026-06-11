@@ -102,6 +102,7 @@ Current local verification:
 - Student request list and detail view
 - Tutor profile list
 - Deterministic tutor matching score
+- Database candidate prefilter before scoring
 - Factor breakdown: subject, level, location/mode, budget, availability, tutor type, history
 - AI/mock match explanation
 - WhatsApp-style message draft endpoint and UI

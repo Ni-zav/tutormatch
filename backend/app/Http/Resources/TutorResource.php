@@ -21,6 +21,7 @@ class TutorResource extends JsonResource
             'rating' => $this->rating,
             'acceptance_rate' => $this->acceptance_rate,
             'success_score' => $this->success_score,
+            'is_active' => $this->is_active,
             'bio' => $this->bio,
             'subjects' => $this->whenLoaded('tutorSubjects', fn () => $this->tutorSubjects->map(fn ($ability) => [
                 'subject' => $ability->subject?->name,

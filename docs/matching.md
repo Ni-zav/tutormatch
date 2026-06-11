@@ -14,6 +14,12 @@ TutorMatch Ops uses deterministic scoring as the source of truth.
 
 The score is stored in `match_results.total_score`, while the individual factors are stored as JSON in `score_breakdown`.
 
+## Candidate Prefilter
+
+Match generation first builds a database candidate set, then runs deterministic scoring only on those tutors. The prefilter keeps tutors who are active, teach the requested subject and exact or general level, fit the requested online/home/hybrid mode and rough location requirement, overlap the request budget, and match the requested availability slot when one is provided.
+
+Existing match rows for tutors that no longer pass the prefilter are removed during regeneration so repeated runs stay aligned with current tutor data. Final ordering is deterministic: total score, tutor success score, acceptance rate, then tutor id.
+
 ## Limitations
 
 The current model uses simple exact matches and demo success signals. In production, weights should be tuned using placement outcomes, tutor response time, parent feedback, student retention, rejection reasons, and coordinator overrides.
