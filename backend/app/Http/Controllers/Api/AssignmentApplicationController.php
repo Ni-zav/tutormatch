@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreApplicationRequest;
+use App\Http\Requests\UpdateApplicationStatusRequest;
 use App\Models\Application;
 use App\Models\Assignment;
 use App\Services\AuditLogger;
@@ -63,5 +64,31 @@ class AssignmentApplicationController extends Controller
         ]);
 
         return response()->json(['data' => $application]);
+    }
+
+    public function update(UpdateApplicationStatusRequest $request, Application $application, AuditLogger $auditLogger)
+    {
+        $validated = $request->validated();
+        $previousStatus = $application->status;
+        $application->update([
+            'status' => $validated['status'],
+        ]);
+        $auditLogger->record($request, 'application.status_updated', $application, [
+            'assignment_id' => $application->assignment_id,
+            'tutor_id' => $application->tutor_id,
+            'previous_status' => $previousStatus,
+            'current_status' => $application->status,
+        ]);
+
+        return response()->json([
+            'data' => [
+                'id' => $application->id,
+                'tutor_id' => $application->tutor_id,
+                'tutor_name' => $application->tutor?->name,
+                'status' => $application->status,
+                'message' => $application->message,
+                'applied_at' => $application->applied_at,
+            ],
+        ]);
     }
 }

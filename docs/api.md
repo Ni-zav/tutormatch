@@ -31,6 +31,7 @@ Most workflow routes require a bearer token from `POST /auth/login`. Tokens are 
 | GET | `/assignments` | Open assignment feed; tutors see their own application status, coordinators/admins see submitted applications |
 | POST | `/assignments/{id}/applications` | Admin/coordinator/tutor application submission |
 | DELETE | `/assignments/{id}/applications` | Admin/coordinator/tutor application withdrawal |
+| PATCH | `/applications/{id}` | Coordinator/admin update application status |
 | POST | `/matches/{id}/explain` | Coordinator/admin AI/mock match explanation |
 | PATCH | `/matches/{id}/workflow` | Coordinator/admin shortlist, outreach, and outcome status update |
 | POST | `/message-drafts` | Coordinator/admin AI/mock message draft |
@@ -115,10 +116,20 @@ Message draft responses include `generated_by`, `prompt_version`, `fallback_used
 
 Tutor users do not need to send `tutor_id` when applying or withdrawing. If a tutor sends a different `tutor_id`, the API still uses the authenticated tutor profile.
 
+Coordinator/admin users can update application status with:
+
+```json
+{
+  "status": "accepted"
+}
+```
+
+Allowed application statuses are `applied`, `accepted`, `rejected`, and `withdrawn`. Tutor users cannot call this direct status update route.
+
 ## Tutor Profile Update
 
 Tutor users can update `teaching_mode`, `location`, hourly rate range, `bio`, active/paused status, and availability slots. Availability slots are simple `{day_of_week, time_block}` pairs used by the matching prefilter.
 
 ## Audit Logging
 
-The API writes internal audit rows for login/logout, request creation, match generation, match workflow updates, message draft creation, tutor applications, and withdrawals. Audit logs are not exposed through a public endpoint in the current MVP.
+The API writes internal audit rows for login/logout, request creation, match generation, match workflow updates, message draft creation, tutor applications, application status updates, and withdrawals. Audit logs are not exposed through a public endpoint in the current MVP.

@@ -200,6 +200,24 @@ function App() {
     }
   }
 
+  async function updateApplicationStatus(applicationId: number, status: Assignment['applications'][number]['status']) {
+    setLoading('Updating application');
+    setError(null);
+    try {
+      const response = await api.updateApplicationStatus(applicationId, { status });
+      setAssignments((current) => current.map((assignment) => ({
+        ...assignment,
+        applications: assignment.applications.map((application) => (
+          application.id === applicationId ? response.data : application
+        )),
+      })));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to update application.');
+    } finally {
+      setLoading('');
+    }
+  }
+
   const topMatch = matches[0];
   const requestOptions = useMemo(() => requests.map((item) => ({ id: item.id, label: `${item.student_name} - ${item.subject?.name ?? 'Subject'}` })), [requests]);
 
@@ -258,7 +276,7 @@ function App() {
             onUpdateMatch={updateMatchWorkflow}
           />
         )}
-        {view === 'applications' && <Applications assignments={assignments} />}
+        {view === 'applications' && <Applications assignments={assignments} onUpdateApplication={updateApplicationStatus} />}
         {view === 'tutors' && <Tutors tutors={tutors} />}
         {view === 'drafts' && <Drafts draft={draft} />}
       </section>
@@ -451,7 +469,10 @@ function RequestDetail({ request, matches, aiNote, onGenerate, onExplain, onDraf
   );
 }
 
-function Applications({ assignments }: { assignments: Assignment[] }) {
+function Applications({ assignments, onUpdateApplication }: {
+  assignments: Assignment[];
+  onUpdateApplication: (applicationId: number, status: Assignment['applications'][number]['status']) => void;
+}) {
   const assignmentsWithApplications = assignments.filter((assignment) => assignment.applications.length > 0);
 
   if (!assignmentsWithApplications.length) return <EmptyState text="No tutor applications have been submitted yet." />;
@@ -473,6 +494,10 @@ function Applications({ assignments }: { assignments: Assignment[] }) {
               </div>
               <p>{application.message ?? 'No message provided.'}</p>
               <small>{application.applied_at ? new Date(application.applied_at).toLocaleString() : 'Application time unavailable'}</small>
+              <div className="match-actions">
+                <button onClick={() => onUpdateApplication(application.id, 'accepted')} disabled={application.status === 'accepted'}>Accept</button>
+                <button onClick={() => onUpdateApplication(application.id, 'rejected')} disabled={application.status === 'rejected'}>Reject</button>
+              </div>
             </article>
           ))}
         </section>

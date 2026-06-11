@@ -65,7 +65,7 @@ export type AssignmentApplication = {
   id: number;
   tutor_id: number;
   tutor_name: string | null;
-  status: string;
+  status: 'applied' | 'accepted' | 'rejected' | 'withdrawn';
   message: string | null;
   applied_at: string;
 };

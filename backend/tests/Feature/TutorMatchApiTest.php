@@ -365,6 +365,71 @@ class TutorMatchApiTest extends TestCase
             ->assertJsonPath('data.0.applications.0.message', 'Available for Saturday morning.');
     }
 
+    public function test_coordinator_can_update_application_status(): void
+    {
+        $token = $this->tokenForCoordinator();
+        [$studentRequest, $tutor] = $this->matchFixture();
+        $assignment = Assignment::create([
+            'student_request_id' => $studentRequest->id,
+            'title' => 'Sec 4 O-Level Chemistry in Bishan',
+            'status' => 'open',
+            'published_at' => now(),
+        ]);
+        $application = $assignment->applications()->create([
+            'tutor_id' => $tutor->id,
+            'status' => 'applied',
+            'message' => 'Available for Saturday morning.',
+            'applied_at' => now(),
+        ]);
+
+        $this->withToken($token)
+            ->patchJson("/api/applications/{$application->id}", [
+                'status' => 'accepted',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.status', 'accepted')
+            ->assertJsonPath('data.tutor_name', 'Daniel Lim');
+
+        $this->assertDatabaseHas('applications', [
+            'id' => $application->id,
+            'status' => 'accepted',
+        ]);
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'application.status_updated',
+            'auditable_type' => \App\Models\Application::class,
+            'auditable_id' => $application->id,
+        ]);
+    }
+
+    public function test_tutor_cannot_update_application_status_directly(): void
+    {
+        $user = User::create([
+            'name' => 'Tutor',
+            'email' => 'application-status-tutor@example.test',
+            'password' => 'password',
+            'role' => 'tutor',
+        ]);
+        $token = $this->tokenFor($user);
+        [$studentRequest, $tutor] = $this->matchFixture(['user_id' => $user->id]);
+        $assignment = Assignment::create([
+            'student_request_id' => $studentRequest->id,
+            'title' => 'Sec 4 O-Level Chemistry in Bishan',
+            'status' => 'open',
+            'published_at' => now(),
+        ]);
+        $application = $assignment->applications()->create([
+            'tutor_id' => $tutor->id,
+            'status' => 'applied',
+            'applied_at' => now(),
+        ]);
+
+        $this->withToken($token)
+            ->patchJson("/api/applications/{$application->id}", [
+                'status' => 'accepted',
+            ])
+            ->assertForbidden();
+    }
+
     public function test_tutor_application_uses_authenticated_tutor_profile(): void
     {
         $user = User::create([

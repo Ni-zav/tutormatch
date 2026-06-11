@@ -40,6 +40,7 @@ Route::middleware('api.token:admin,coordinator')->group(function (): void {
     Route::apiResource('tutors', TutorController::class)->only(['index', 'show']);
     Route::post('/matches/{matchResult}/explain', [MatchController::class, 'explain'])->middleware('throttle:30,1');
     Route::patch('/matches/{matchResult}/workflow', [MatchController::class, 'updateWorkflow']);
+    Route::patch('/applications/{application}', [AssignmentApplicationController::class, 'update']);
     Route::post('/message-drafts', MessageDraftController::class)->middleware('throttle:30,1');
 });
 
