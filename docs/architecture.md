@@ -34,4 +34,4 @@ Expo Tutor Mini App
 
 ## Production Tradeoffs
 
-The current auth layer is a small MVP foundation: seeded users have admin, coordinator, or tutor roles, login issues a hashed bearer token, and workflow routes are role-protected. Before real users, replace this with Sanctum or another expiring token/session flow, add token rotation and audit logs, and keep coordinator-only actions separate from tutor-facing endpoints.
+The current auth layer is a small MVP foundation: seeded users have admin, coordinator, or tutor roles, login issues a hashed bearer token, tokens expire through `API_TOKEN_TTL_MINUTES`, and workflow routes are role-protected. Before real users, replace this with Sanctum or another production-grade token/session flow, add token rotation and reviewable auth management, and keep coordinator-only actions separate from tutor-facing endpoints.

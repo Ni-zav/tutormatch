@@ -97,7 +97,7 @@ Current local verification:
 - `php artisan route:list --path=api` should show the protected auth, request, matching, tutor, application, and message draft routes.
 - `php artisan test` covers auth, matching, workflow status updates, and AI mock behavior when PHP is available.
 - `npm run build` passes for the frontend.
-- Mobile TypeScript validation passes with `node_modules/.bin/tsc --noEmit`.
+- Mobile TypeScript validation passes with `npm run typecheck`.
 - `npm install` in `mobile/` currently reports 10 moderate audit findings from the Expo dependency tree; review with `npm audit` before production use.
 
 ## Features
