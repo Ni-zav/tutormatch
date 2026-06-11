@@ -147,6 +147,7 @@ More detail is in:
 - `docs/matching.md`
 - `docs/ai.md`
 - `docs/deployment.md`
+- `docs/security-privacy.md`
 - `docs/domain-research.md`
 - `docs/interview-guide.md`
 
