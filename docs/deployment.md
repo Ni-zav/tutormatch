@@ -43,6 +43,8 @@ Required backend variables:
 - `AI_TIMEOUT_SECONDS=20`
 - `AUDIT_LOG_RETENTION_DAYS=365`
 - `MESSAGE_DRAFT_RETENTION_DAYS=180`
+- `FINALIZED_REQUEST_RETENTION_DAYS=730`
+- `INACTIVE_TUTOR_RETENTION_DAYS=730`
 
 For real AI, set `AI_PROVIDER=openai`, `OPENAI_API_KEY`, `OPENAI_MODEL`, and `AI_TIMEOUT_SECONDS`. Do not make paid AI required for core matching.
 
@@ -70,7 +72,7 @@ php artisan tutormatch:prune-retention --dry-run
 php artisan tutormatch:prune-retention
 ```
 
-When retention windows are approved, schedule the command daily through cron or Laravel Scheduler. The command removes audit logs older than `AUDIT_LOG_RETENTION_DAYS` and message drafts older than `MESSAGE_DRAFT_RETENTION_DAYS`.
+When retention windows are approved, schedule the command daily through cron or Laravel Scheduler. The command removes audit logs older than `AUDIT_LOG_RETENTION_DAYS`, message drafts older than `MESSAGE_DRAFT_RETENTION_DAYS`, and finalized student requests older than `FINALIZED_REQUEST_RETENTION_DAYS`. It anonymizes inactive tutor profiles older than `INACTIVE_TUTOR_RETENTION_DAYS` instead of deleting tutor records.
 
 ## Backups
 

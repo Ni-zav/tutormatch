@@ -13,15 +13,15 @@ TutorMatch may handle student, parent, tutor, schedule, budget, location, and le
 - CORS origins are configured through `FRONTEND_ALLOWED_ORIGINS`.
 - Public health checks avoid secrets and personal data.
 - Structured audit logs record key operational events with user id, action, target object, compact metadata, IP address, and user agent.
-- `tutormatch:prune-retention` can remove old audit logs and message drafts using configured retention windows.
+- `tutormatch:prune-retention` can remove old audit logs, message drafts, and finalized requests using configured retention windows, and anonymize old inactive tutor profiles.
 
 ## Production Requirements Before Real Users
 
 - Replace demo bearer tokens with Sanctum tokens or a comparable production auth flow with token rotation, device/session review, and stronger account lifecycle controls.
 - Use strong passwords, secure reset flows, and role review for admin/coordinator access.
-- Add audit log review/export screens and retention policy before real production use.
+- Define audit review/export access policy and approve production retention windows before real production use.
 - Store only the personal data needed for assignment operations.
-- Expand retention rules for stale requests, rejected matches, and inactive tutor profiles.
+- Expand retention rules for rejected matches, archived backups, and inactive users.
 - Encrypt production backups and restrict restore access.
 - Keep `.env`, API keys, database credentials, and AI provider keys out of Git.
 

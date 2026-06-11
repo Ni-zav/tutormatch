@@ -45,6 +45,8 @@ return [
     'retention' => [
         'audit_log_days' => (int) env('AUDIT_LOG_RETENTION_DAYS', 365),
         'message_draft_days' => (int) env('MESSAGE_DRAFT_RETENTION_DAYS', 180),
+        'finalized_request_days' => (int) env('FINALIZED_REQUEST_RETENTION_DAYS', 730),
+        'inactive_tutor_days' => (int) env('INACTIVE_TUTOR_RETENTION_DAYS', 730),
     ],
 
 ];

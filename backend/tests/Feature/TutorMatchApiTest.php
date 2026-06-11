@@ -11,6 +11,7 @@ use App\Models\StudentRequest;
 use App\Models\Subject;
 use App\Models\Tutor;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Http;
@@ -146,31 +147,52 @@ class TutorMatchApiTest extends TestCase
         $oldLog = AuditLog::create([
             'action' => 'request.created',
         ]);
-        $oldLog->forceFill([
-            'created_at' => now()->subDays(400),
-            'updated_at' => now()->subDays(400),
-        ])->save();
+        $this->ageRecord($oldLog, 400);
         $oldDraft = MessageDraft::create([
             'audience' => 'client',
             'channel' => 'whatsapp',
             'body' => 'Old draft',
             'generated_by' => 'mock_ai',
         ]);
-        $oldDraft->forceFill([
-            'created_at' => now()->subDays(200),
-            'updated_at' => now()->subDays(200),
-        ])->save();
+        $this->ageRecord($oldDraft, 200);
+        $oldRequest = StudentRequest::create([
+            'student_name' => 'Old Student',
+            'subject_id' => Subject::create(['name' => 'Physics'])->id,
+            'level_id' => Level::create(['name' => 'JC 1'])->id,
+            'location' => 'Bishan',
+            'teaching_mode' => 'home',
+            'budget_max' => 70,
+            'status' => 'closed',
+            'schedule_notes' => 'Old closed request',
+        ]);
+        $this->ageRecord($oldRequest, 800);
+        $inactiveTutor = Tutor::create([
+            'name' => 'Inactive Tutor',
+            'tutor_type' => 'part_time',
+            'teaching_mode' => 'online',
+            'location' => 'Tampines',
+            'hourly_rate_min' => 40,
+            'hourly_rate_max' => 60,
+            'is_active' => false,
+        ]);
+        $this->ageRecord($inactiveTutor, 800);
 
         Artisan::call('tutormatch:prune-retention', [
             '--audit-days' => 365,
             '--draft-days' => 180,
+            '--request-days' => 730,
+            '--inactive-tutor-days' => 730,
             '--dry-run' => true,
         ]);
 
         $this->assertDatabaseHas('audit_logs', ['id' => $oldLog->id]);
         $this->assertDatabaseHas('message_drafts', ['id' => $oldDraft->id]);
+        $this->assertDatabaseHas('student_requests', ['id' => $oldRequest->id]);
+        $this->assertDatabaseHas('tutors', ['id' => $inactiveTutor->id, 'name' => 'Inactive Tutor']);
         $this->assertStringContainsString('Would delete 1 audit logs', Artisan::output());
         $this->assertStringContainsString('Would delete 1 message drafts', Artisan::output());
+        $this->assertStringContainsString('Would delete 1 finalized student requests', Artisan::output());
+        $this->assertStringContainsString('Would anonymize 1 inactive tutor profiles', Artisan::output());
     }
 
     public function test_retention_prune_command_deletes_only_expired_records(): void
@@ -178,47 +200,94 @@ class TutorMatchApiTest extends TestCase
         $oldLog = AuditLog::create([
             'action' => 'request.created',
         ]);
-        $oldLog->forceFill([
-            'created_at' => now()->subDays(400),
-            'updated_at' => now()->subDays(400),
-        ])->save();
+        $this->ageRecord($oldLog, 400);
         $newLog = AuditLog::create([
             'action' => 'auth.login',
         ]);
-        $newLog->forceFill([
-            'created_at' => now()->subDays(30),
-            'updated_at' => now()->subDays(30),
-        ])->save();
+        $this->ageRecord($newLog, 30);
         $oldDraft = MessageDraft::create([
             'audience' => 'client',
             'channel' => 'whatsapp',
             'body' => 'Old draft',
             'generated_by' => 'mock_ai',
         ]);
-        $oldDraft->forceFill([
-            'created_at' => now()->subDays(200),
-            'updated_at' => now()->subDays(200),
-        ])->save();
+        $this->ageRecord($oldDraft, 200);
         $newDraft = MessageDraft::create([
             'audience' => 'client',
             'channel' => 'whatsapp',
             'body' => 'Current draft',
             'generated_by' => 'mock_ai',
         ]);
-        $newDraft->forceFill([
-            'created_at' => now()->subDays(20),
-            'updated_at' => now()->subDays(20),
-        ])->save();
+        $this->ageRecord($newDraft, 20);
+        $subject = Subject::create(['name' => 'Physics']);
+        $level = Level::create(['name' => 'JC 1']);
+        $oldClosedRequest = StudentRequest::create([
+            'student_name' => 'Old Closed Student',
+            'subject_id' => $subject->id,
+            'level_id' => $level->id,
+            'location' => 'Bishan',
+            'teaching_mode' => 'home',
+            'budget_max' => 70,
+            'status' => 'closed',
+            'schedule_notes' => 'Old closed request',
+        ]);
+        $this->ageRecord($oldClosedRequest, 800);
+        $oldOpenRequest = StudentRequest::create([
+            'student_name' => 'Old Open Student',
+            'subject_id' => $subject->id,
+            'level_id' => $level->id,
+            'location' => 'Bishan',
+            'teaching_mode' => 'home',
+            'budget_max' => 70,
+            'status' => 'new',
+            'schedule_notes' => 'Old but still open',
+        ]);
+        $this->ageRecord($oldOpenRequest, 800);
+        $inactiveTutor = Tutor::create([
+            'name' => 'Inactive Tutor',
+            'tutor_type' => 'part_time',
+            'teaching_mode' => 'online',
+            'location' => 'Tampines',
+            'hourly_rate_min' => 40,
+            'hourly_rate_max' => 60,
+            'bio' => 'Contains personal profile notes.',
+            'is_active' => false,
+        ]);
+        $inactiveTutor->availabilities()->create(['day_of_week' => 'weekday', 'time_block' => 'evening']);
+        $this->ageRecord($inactiveTutor, 800);
+        $activeTutor = Tutor::create([
+            'name' => 'Active Tutor',
+            'tutor_type' => 'part_time',
+            'teaching_mode' => 'online',
+            'location' => 'Tampines',
+            'hourly_rate_min' => 40,
+            'hourly_rate_max' => 60,
+            'is_active' => true,
+        ]);
+        $this->ageRecord($activeTutor, 800);
 
         Artisan::call('tutormatch:prune-retention', [
             '--audit-days' => 365,
             '--draft-days' => 180,
+            '--request-days' => 730,
+            '--inactive-tutor-days' => 730,
         ]);
 
         $this->assertDatabaseMissing('audit_logs', ['id' => $oldLog->id]);
         $this->assertDatabaseHas('audit_logs', ['id' => $newLog->id]);
         $this->assertDatabaseMissing('message_drafts', ['id' => $oldDraft->id]);
         $this->assertDatabaseHas('message_drafts', ['id' => $newDraft->id]);
+        $this->assertDatabaseMissing('student_requests', ['id' => $oldClosedRequest->id]);
+        $this->assertDatabaseHas('student_requests', ['id' => $oldOpenRequest->id]);
+        $this->assertDatabaseHas('tutors', [
+            'id' => $inactiveTutor->id,
+            'name' => "Inactive tutor #{$inactiveTutor->id}",
+            'user_id' => null,
+            'location' => 'Redacted',
+            'bio' => null,
+        ]);
+        $this->assertDatabaseMissing('tutor_availabilities', ['tutor_id' => $inactiveTutor->id]);
+        $this->assertDatabaseHas('tutors', ['id' => $activeTutor->id, 'name' => 'Active Tutor']);
     }
 
     public function test_expired_api_tokens_are_rejected_and_revoked(): void
@@ -771,6 +840,16 @@ class TutorMatchApiTest extends TestCase
         ])->save();
 
         return $token;
+    }
+
+    private function ageRecord(Model $model, int $days): void
+    {
+        $model::withoutTimestamps(function () use ($model, $days): void {
+            $model->forceFill([
+                'created_at' => now()->subDays($days),
+                'updated_at' => now()->subDays($days),
+            ])->save();
+        });
     }
 
     public function test_login_and_logout_are_audited(): void

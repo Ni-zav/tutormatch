@@ -112,7 +112,7 @@ Current local verification:
 - Structured audit logs for auth, request creation, match generation, workflow updates, message drafts, and tutor applications
 - Coordinator/admin audit trail review with action filtering and CSV export
 - Coordinator application review view with accept/reject actions that can finalize an assignment
-- Retention cleanup command for old audit logs and message drafts
+- Retention cleanup command for old audit logs, message drafts, finalized requests, and inactive tutor profiles
 - AI/mock match explanation
 - WhatsApp-style message draft endpoint and UI
 - Expo tutor mini flow with authenticated feed, filters, detail, apply/withdraw, profile, and availability updates
@@ -153,7 +153,7 @@ php artisan tutormatch:prune-retention --dry-run
 php artisan tutormatch:prune-retention
 ```
 
-Defaults are `AUDIT_LOG_RETENTION_DAYS=365` and `MESSAGE_DRAFT_RETENTION_DAYS=180`.
+Defaults are `AUDIT_LOG_RETENTION_DAYS=365`, `MESSAGE_DRAFT_RETENTION_DAYS=180`, `FINALIZED_REQUEST_RETENTION_DAYS=730`, and `INACTIVE_TUTOR_RETENTION_DAYS=730`.
 
 ## Architecture
 
