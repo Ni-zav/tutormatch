@@ -48,12 +48,17 @@ class TutorMatchApiTest extends TestCase
             'password' => 'password',
         ])
             ->assertOk()
-            ->assertJsonPath('data.user.role', 'coordinator');
+            ->assertJsonPath('data.user.role', 'coordinator')
+            ->assertJsonPath('data.user.token_last_used_at', null)
+            ->assertJsonStructure(['data' => ['user' => ['token_issued_at', 'token_expires_at']]]);
 
         $this->withToken($login->json('data.token'))
             ->getJson('/api/auth/me')
             ->assertOk()
-            ->assertJsonPath('data.email', 'coordinator@example.test');
+            ->assertJsonPath('data.email', 'coordinator@example.test')
+            ->assertJsonStructure(['data' => ['token_last_used_at', 'token_expires_at']]);
+
+        $this->assertNotNull(User::where('email', 'coordinator@example.test')->first()?->api_token_last_used_at);
     }
 
     public function test_tutor_role_cannot_access_coordinator_dashboard(): void
@@ -314,6 +319,7 @@ class TutorMatchApiTest extends TestCase
             'id' => $user->id,
             'api_token_hash' => null,
             'api_token_issued_at' => null,
+            'api_token_last_used_at' => null,
         ]);
     }
 
@@ -837,6 +843,7 @@ class TutorMatchApiTest extends TestCase
         $user->forceFill([
             'api_token_hash' => hash('sha256', $token),
             'api_token_issued_at' => now(),
+            'api_token_last_used_at' => null,
         ])->save();
 
         return $token;

@@ -33,6 +33,7 @@ class AuthenticateApiToken
             $user->forceFill([
                 'api_token_hash' => null,
                 'api_token_issued_at' => null,
+                'api_token_last_used_at' => null,
             ])->save();
 
             return response()->json(['message' => 'Token expired.'], 401);
@@ -41,6 +42,10 @@ class AuthenticateApiToken
         if ($roles !== [] && ! in_array($user->role, $roles, true)) {
             return response()->json(['message' => 'Forbidden.'], 403);
         }
+
+        $user->forceFill([
+            'api_token_last_used_at' => now(),
+        ])->save();
 
         $request->setUserResolver(fn () => $user);
 

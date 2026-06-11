@@ -129,6 +129,9 @@ export type AuthUser = {
   name: string;
   email: string;
   role: 'admin' | 'coordinator' | 'tutor';
+  token_issued_at: string | null;
+  token_last_used_at: string | null;
+  token_expires_at: string | null;
 };
 
 export type LoginResponse = {

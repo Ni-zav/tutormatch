@@ -31,6 +31,7 @@ class AuthController extends Controller
         $user->forceFill([
             'api_token_hash' => hash('sha256', $plainToken),
             'api_token_issued_at' => now(),
+            'api_token_last_used_at' => null,
         ])->save();
         $request->setUserResolver(fn () => $user);
         $auditLogger->record($request, 'auth.login', $user, [
@@ -58,6 +59,7 @@ class AuthController extends Controller
         $request->user()->forceFill([
             'api_token_hash' => null,
             'api_token_issued_at' => null,
+            'api_token_last_used_at' => null,
         ])->save();
         $auditLogger->record($request, 'auth.logout', $user);
 
@@ -71,6 +73,11 @@ class AuthController extends Controller
             'name' => $user->name,
             'email' => $user->email,
             'role' => $user->role,
+            'token_issued_at' => $user->api_token_issued_at,
+            'token_last_used_at' => $user->api_token_last_used_at,
+            'token_expires_at' => $user->api_token_issued_at
+                ? $user->api_token_issued_at->copy()->addMinutes((int) config('auth.api_token_ttl_minutes', 1440))
+                : null,
         ];
     }
 }

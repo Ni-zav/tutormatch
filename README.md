@@ -113,6 +113,7 @@ Current local verification:
 - Coordinator/admin audit trail review with action filtering and CSV export
 - Coordinator application review view with accept/reject actions that can finalize an assignment
 - Retention cleanup command for old audit logs, message drafts, finalized requests, and inactive tutor profiles
+- Hashed bearer-token auth with expiry and last-used tracking
 - AI/mock match explanation
 - WhatsApp-style message draft endpoint and UI
 - Expo tutor mini flow with authenticated feed, filters, detail, apply/withdraw, profile, and availability updates
@@ -190,7 +191,7 @@ More detail is in:
 
 ## Production Next Steps
 
-- Replace the demo bearer-token login with Sanctum or another expiring token/session flow before real users.
+- Replace the demo bearer-token login with Sanctum or another production-grade token/session flow before real users.
 - Add audit log review/export screens for administrators.
 - Add queue-based match generation for high-volume workloads.
 - Add privacy controls and prompt redaction before real AI provider use.

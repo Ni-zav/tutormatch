@@ -2,7 +2,7 @@
 
 Base path: `/api`
 
-Most workflow routes require a bearer token from `POST /auth/login`. Tokens are stored hashed server-side and expire after `API_TOKEN_TTL_MINUTES` minutes, defaulting to 1440. The local seed data creates fictional demo users:
+Most workflow routes require a bearer token from `POST /auth/login`. Tokens are stored hashed server-side, track last use, and expire after `API_TOKEN_TTL_MINUTES` minutes, defaulting to 1440. Auth user payloads include `token_issued_at`, `token_last_used_at`, and `token_expires_at`. The local seed data creates fictional demo users:
 
 - `coordinator@tutormatch.test` / `password`
 - `admin@tutormatch.test` / `password`
