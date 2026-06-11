@@ -381,6 +381,20 @@ class TutorMatchApiTest extends TestCase
             'message' => 'Available for Saturday morning.',
             'applied_at' => now(),
         ]);
+        $otherTutor = Tutor::create([
+            'name' => 'Backup Tutor',
+            'tutor_type' => 'part_time',
+            'teaching_mode' => 'online',
+            'location' => 'Tampines',
+            'hourly_rate_min' => 45,
+            'hourly_rate_max' => 60,
+        ]);
+        $otherApplication = $assignment->applications()->create([
+            'tutor_id' => $otherTutor->id,
+            'status' => 'applied',
+            'message' => 'Can do weekday evenings.',
+            'applied_at' => now(),
+        ]);
 
         $this->withToken($token)
             ->patchJson("/api/applications/{$application->id}", [
@@ -393,6 +407,18 @@ class TutorMatchApiTest extends TestCase
         $this->assertDatabaseHas('applications', [
             'id' => $application->id,
             'status' => 'accepted',
+        ]);
+        $this->assertDatabaseHas('applications', [
+            'id' => $otherApplication->id,
+            'status' => 'rejected',
+        ]);
+        $this->assertDatabaseHas('assignments', [
+            'id' => $assignment->id,
+            'status' => 'confirmed',
+        ]);
+        $this->assertDatabaseHas('student_requests', [
+            'id' => $studentRequest->id,
+            'status' => 'confirmed',
         ]);
         $this->assertDatabaseHas('audit_logs', [
             'action' => 'application.status_updated',

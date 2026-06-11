@@ -124,7 +124,7 @@ Coordinator/admin users can update application status with:
 }
 ```
 
-Allowed application statuses are `applied`, `accepted`, `rejected`, and `withdrawn`. Tutor users cannot call this direct status update route.
+Allowed application statuses are `applied`, `accepted`, `rejected`, and `withdrawn`. Tutor users cannot call this direct status update route. Setting an application to `accepted` confirms the assignment and student request, and rejects other still-applied applications for that assignment.
 
 ## Tutor Profile Update
 

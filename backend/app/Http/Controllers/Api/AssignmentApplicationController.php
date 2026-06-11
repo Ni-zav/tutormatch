@@ -8,6 +8,7 @@ use App\Http\Requests\UpdateApplicationStatusRequest;
 use App\Models\Application;
 use App\Models\Assignment;
 use App\Services\AuditLogger;
+use Illuminate\Support\Facades\DB;
 
 class AssignmentApplicationController extends Controller
 {
@@ -70,14 +71,34 @@ class AssignmentApplicationController extends Controller
     {
         $validated = $request->validated();
         $previousStatus = $application->status;
-        $application->update([
-            'status' => $validated['status'],
-        ]);
+
+        DB::transaction(function () use ($application, $validated): void {
+            $application->update([
+                'status' => $validated['status'],
+            ]);
+
+            if ($application->status !== 'accepted') {
+                return;
+            }
+
+            $assignment = $application->assignment;
+            $assignment?->update(['status' => 'confirmed']);
+            $assignment?->studentRequest()->update(['status' => 'confirmed']);
+            Application::query()
+                ->where('assignment_id', $application->assignment_id)
+                ->whereKeyNot($application->id)
+                ->where('status', 'applied')
+                ->update(['status' => 'rejected']);
+        });
+
+        $application->refresh();
         $auditLogger->record($request, 'application.status_updated', $application, [
             'assignment_id' => $application->assignment_id,
             'tutor_id' => $application->tutor_id,
             'previous_status' => $previousStatus,
             'current_status' => $application->status,
+            'assignment_status' => $application->assignment?->status,
+            'student_request_status' => $application->assignment?->studentRequest?->status,
         ]);
 
         return response()->json([

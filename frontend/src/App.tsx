@@ -204,13 +204,11 @@ function App() {
     setLoading('Updating application');
     setError(null);
     try {
-      const response = await api.updateApplicationStatus(applicationId, { status });
-      setAssignments((current) => current.map((assignment) => ({
-        ...assignment,
-        applications: assignment.applications.map((application) => (
-          application.id === applicationId ? response.data : application
-        )),
-      })));
+      await api.updateApplicationStatus(applicationId, { status });
+      const [summaryResponse, assignmentResponse, requestResponse] = await Promise.all([api.summary(), api.assignments(), api.requests()]);
+      setSummary(summaryResponse);
+      setAssignments(assignmentResponse.data);
+      setRequests(requestResponse.data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to update application.');
     } finally {
