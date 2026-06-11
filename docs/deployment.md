@@ -41,6 +41,8 @@ Required backend variables:
 - `SESSION_DRIVER=database`
 - `AI_PROVIDER=mock` unless a real provider is intentionally configured
 - `AI_TIMEOUT_SECONDS=20`
+- `AUDIT_LOG_RETENTION_DAYS=365`
+- `MESSAGE_DRAFT_RETENTION_DAYS=180`
 
 For real AI, set `AI_PROVIDER=openai`, `OPENAI_API_KEY`, `OPENAI_MODEL`, and `AI_TIMEOUT_SECONDS`. Do not make paid AI required for core matching.
 
@@ -61,7 +63,14 @@ Run one queue worker for now:
 php artisan queue:work --tries=3 --timeout=60
 ```
 
-The current app does not require Laravel Scheduler. Add it only when scheduled reminders, cleanup jobs, or sync tasks exist.
+Run the retention cleanup manually first:
+
+```bash
+php artisan tutormatch:prune-retention --dry-run
+php artisan tutormatch:prune-retention
+```
+
+When retention windows are approved, schedule the command daily through cron or Laravel Scheduler. The command removes audit logs older than `AUDIT_LOG_RETENTION_DAYS` and message drafts older than `MESSAGE_DRAFT_RETENTION_DAYS`.
 
 ## Backups
 

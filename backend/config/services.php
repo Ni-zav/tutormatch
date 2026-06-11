@@ -42,4 +42,9 @@ return [
         'timeout_seconds' => (int) env('AI_TIMEOUT_SECONDS', 20),
     ],
 
+    'retention' => [
+        'audit_log_days' => (int) env('AUDIT_LOG_RETENTION_DAYS', 365),
+        'message_draft_days' => (int) env('MESSAGE_DRAFT_RETENTION_DAYS', 180),
+    ],
+
 ];

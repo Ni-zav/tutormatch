@@ -6,11 +6,13 @@ use App\Models\Assignment;
 use App\Models\AuditLog;
 use App\Models\Level;
 use App\Models\MatchResult;
+use App\Models\MessageDraft;
 use App\Models\StudentRequest;
 use App\Models\Subject;
 use App\Models\Tutor;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
@@ -137,6 +139,86 @@ class TutorMatchApiTest extends TestCase
         $this->withToken($token)
             ->getJson('/api/audit-logs')
             ->assertForbidden();
+    }
+
+    public function test_retention_prune_command_supports_dry_run(): void
+    {
+        $oldLog = AuditLog::create([
+            'action' => 'request.created',
+        ]);
+        $oldLog->forceFill([
+            'created_at' => now()->subDays(400),
+            'updated_at' => now()->subDays(400),
+        ])->save();
+        $oldDraft = MessageDraft::create([
+            'audience' => 'client',
+            'channel' => 'whatsapp',
+            'body' => 'Old draft',
+            'generated_by' => 'mock_ai',
+        ]);
+        $oldDraft->forceFill([
+            'created_at' => now()->subDays(200),
+            'updated_at' => now()->subDays(200),
+        ])->save();
+
+        Artisan::call('tutormatch:prune-retention', [
+            '--audit-days' => 365,
+            '--draft-days' => 180,
+            '--dry-run' => true,
+        ]);
+
+        $this->assertDatabaseHas('audit_logs', ['id' => $oldLog->id]);
+        $this->assertDatabaseHas('message_drafts', ['id' => $oldDraft->id]);
+        $this->assertStringContainsString('Would delete 1 audit logs', Artisan::output());
+        $this->assertStringContainsString('Would delete 1 message drafts', Artisan::output());
+    }
+
+    public function test_retention_prune_command_deletes_only_expired_records(): void
+    {
+        $oldLog = AuditLog::create([
+            'action' => 'request.created',
+        ]);
+        $oldLog->forceFill([
+            'created_at' => now()->subDays(400),
+            'updated_at' => now()->subDays(400),
+        ])->save();
+        $newLog = AuditLog::create([
+            'action' => 'auth.login',
+        ]);
+        $newLog->forceFill([
+            'created_at' => now()->subDays(30),
+            'updated_at' => now()->subDays(30),
+        ])->save();
+        $oldDraft = MessageDraft::create([
+            'audience' => 'client',
+            'channel' => 'whatsapp',
+            'body' => 'Old draft',
+            'generated_by' => 'mock_ai',
+        ]);
+        $oldDraft->forceFill([
+            'created_at' => now()->subDays(200),
+            'updated_at' => now()->subDays(200),
+        ])->save();
+        $newDraft = MessageDraft::create([
+            'audience' => 'client',
+            'channel' => 'whatsapp',
+            'body' => 'Current draft',
+            'generated_by' => 'mock_ai',
+        ]);
+        $newDraft->forceFill([
+            'created_at' => now()->subDays(20),
+            'updated_at' => now()->subDays(20),
+        ])->save();
+
+        Artisan::call('tutormatch:prune-retention', [
+            '--audit-days' => 365,
+            '--draft-days' => 180,
+        ]);
+
+        $this->assertDatabaseMissing('audit_logs', ['id' => $oldLog->id]);
+        $this->assertDatabaseHas('audit_logs', ['id' => $newLog->id]);
+        $this->assertDatabaseMissing('message_drafts', ['id' => $oldDraft->id]);
+        $this->assertDatabaseHas('message_drafts', ['id' => $newDraft->id]);
     }
 
     public function test_expired_api_tokens_are_rejected_and_revoked(): void
