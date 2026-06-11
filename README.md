@@ -71,7 +71,7 @@ npm install
 npm run start
 ```
 
-The mobile app logs in with the seeded tutor account, reads open assignments from the backend, and lets the tutor apply or withdraw interest. If the API runs somewhere else, start Expo with:
+The mobile app logs in with the seeded tutor account, reads open assignments from the backend, lets the tutor apply or withdraw interest, and can update basic profile and availability data. If the API runs somewhere else, start Expo with:
 
 ```bash
 EXPO_PUBLIC_API_BASE_URL=http://127.0.0.1:8000/api npm run start
@@ -112,7 +112,7 @@ Current local verification:
 - Structured audit logs for auth, request creation, match generation, workflow updates, message drafts, and tutor applications
 - AI/mock match explanation
 - WhatsApp-style message draft endpoint and UI
-- Expo tutor mini flow with feed, filters, detail, and bulk apply mock
+- Expo tutor mini flow with authenticated feed, filters, detail, apply/withdraw, profile, and availability updates
 - Fictional Singapore-flavored seed data
 - Indexed schema and paginated list endpoints
 
@@ -122,6 +122,8 @@ Current local verification:
 - `POST /api/auth/login`
 - `GET /api/auth/me`
 - `POST /api/auth/logout`
+- `GET /api/tutor/profile`
+- `PATCH /api/tutor/profile`
 - `GET /api/dashboard/summary`
 - `GET /api/subjects`
 - `GET /api/levels`
@@ -180,7 +182,7 @@ More detail is in:
 - Add privacy controls and prompt redaction before real AI provider use.
 - Tune scoring weights with placement and retention data.
 - Add WordPress intake integration for public request forms.
-- Build a fuller Expo tutor app for profile, availability, withdrawal, and status notifications.
+- Build a fuller Expo tutor app for status notifications and richer profile editing.
 
 ## AI Configuration
 

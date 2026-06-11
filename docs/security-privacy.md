@@ -6,6 +6,7 @@ TutorMatch may handle student, parent, tutor, schedule, budget, location, and le
 
 - Coordinator and admin workflow routes require bearer-token authentication.
 - Tutor application submission requires an authenticated admin, coordinator, or tutor. Tutor users are mapped to their own tutor profile server-side so they cannot apply as another tutor.
+- Tutor profile updates are restricted to authenticated tutor users and update only their linked profile.
 - Matching remains deterministic and reviewable; AI does not make final ranking or assignment decisions.
 - `AI_PROVIDER=mock` is the default so the app works without sending data to a paid external AI provider.
 - CORS origins are configured through `FRONTEND_ALLOWED_ORIGINS`.

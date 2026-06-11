@@ -16,6 +16,8 @@ Most workflow routes require a bearer token from `POST /auth/login`. The local s
 | POST | `/auth/login` | Issue bearer token for a valid demo user |
 | GET | `/auth/me` | Current authenticated user |
 | POST | `/auth/logout` | Revoke the current bearer token |
+| GET | `/tutor/profile` | Tutor self-service profile and availability detail |
+| PATCH | `/tutor/profile` | Tutor self-service profile and availability update |
 | GET | `/dashboard/summary` | Coordinator/admin metrics |
 | GET | `/subjects` | Coordinator/admin subject options for request forms |
 | GET | `/levels` | Coordinator/admin level options for request forms |
@@ -112,6 +114,10 @@ Message draft responses include `generated_by`, `prompt_version`, `fallback_used
 `GET /assignments` returns open published assignments. For tutor users, each row includes that tutor's current `application_status` when they have already applied.
 
 Tutor users do not need to send `tutor_id` when applying or withdrawing. If a tutor sends a different `tutor_id`, the API still uses the authenticated tutor profile.
+
+## Tutor Profile Update
+
+Tutor users can update `teaching_mode`, `location`, hourly rate range, `bio`, active/paused status, and availability slots. Availability slots are simple `{day_of_week, time_block}` pairs used by the matching prefilter.
 
 ## Audit Logging
 

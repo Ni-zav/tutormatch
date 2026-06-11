@@ -398,6 +398,61 @@ class TutorMatchApiTest extends TestCase
             ->assertJsonPath('data.status', 'applied');
     }
 
+    public function test_tutor_can_update_own_profile_and_availability(): void
+    {
+        $user = User::create([
+            'name' => 'Tutor',
+            'email' => 'profile-tutor@example.test',
+            'password' => 'password',
+            'role' => 'tutor',
+        ]);
+        $token = $this->tokenFor($user);
+        [, $tutor] = $this->matchFixture(['user_id' => $user->id]);
+
+        $this->withToken($token)->getJson('/api/tutor/profile')
+            ->assertOk()
+            ->assertJsonPath('data.id', $tutor->id);
+
+        $this->withToken($token)->patchJson('/api/tutor/profile', [
+            'teaching_mode' => 'online',
+            'location' => 'Remote',
+            'hourly_rate_min' => 60,
+            'hourly_rate_max' => 80,
+            'bio' => 'Updated profile for online Chemistry support.',
+            'is_active' => true,
+            'availabilities' => [
+                ['day_of_week' => 'weekday', 'time_block' => 'evening'],
+                ['day_of_week' => 'saturday', 'time_block' => 'morning'],
+            ],
+        ])
+            ->assertOk()
+            ->assertJsonPath('data.teaching_mode', 'online')
+            ->assertJsonPath('data.location', 'Remote')
+            ->assertJsonPath('data.availabilities.0.day_of_week', 'weekday');
+
+        $this->assertDatabaseHas('tutors', [
+            'id' => $tutor->id,
+            'teaching_mode' => 'online',
+            'location' => 'Remote',
+            'hourly_rate_min' => 60,
+            'hourly_rate_max' => 80,
+        ]);
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'tutor.profile_updated',
+            'auditable_type' => Tutor::class,
+            'auditable_id' => $tutor->id,
+        ]);
+    }
+
+    public function test_coordinator_cannot_use_tutor_self_service_profile_route(): void
+    {
+        $token = $this->tokenForCoordinator();
+
+        $this->withToken($token)
+            ->getJson('/api/tutor/profile')
+            ->assertForbidden();
+    }
+
     private function tokenForCoordinator(): string
     {
         return $this->tokenFor(User::create([

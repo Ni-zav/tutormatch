@@ -18,7 +18,7 @@ Portable schema for MySQL/PostgreSQL
 
 Expo Tutor Mini App
   - Authenticated assignment feed
-  - Filters, detail, apply and withdraw interest actions
+  - Filters, detail, apply/withdraw interest actions, profile and availability editing
 ```
 
 ## Module Boundaries

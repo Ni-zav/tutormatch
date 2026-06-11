@@ -22,6 +22,17 @@ type Assignment = {
 };
 
 type Mode = 'all' | 'home' | 'online' | 'hybrid';
+type TutorProfile = {
+  id: number;
+  name: string;
+  teaching_mode: 'home' | 'online' | 'hybrid';
+  location: string;
+  hourly_rate_min: number;
+  hourly_rate_max: number;
+  is_active: boolean;
+  bio: string | null;
+  availabilities?: { day_of_week: string; time_block: string }[];
+};
 
 const API_BASE = process.env?.EXPO_PUBLIC_API_BASE_URL ?? 'http://127.0.0.1:8000/api';
 
@@ -31,6 +42,16 @@ export default function App() {
   const [token, setToken] = useState<string | null>(null);
   const [mode, setMode] = useState<Mode>('all');
   const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [profile, setProfile] = useState<TutorProfile | null>(null);
+  const [profileForm, setProfileForm] = useState({
+    teaching_mode: 'hybrid' as TutorProfile['teaching_mode'],
+    location: '',
+    hourly_rate_min: '',
+    hourly_rate_max: '',
+    is_active: true,
+    bio: '',
+    availability_text: '',
+  });
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [loading, setLoading] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -42,7 +63,10 @@ export default function App() {
   const selected = filtered.find((item) => item.id === selectedId) ?? filtered[0] ?? null;
 
   useEffect(() => {
-    if (token) void loadAssignments(token);
+    if (token) {
+      void loadAssignments(token);
+      void loadProfile(token);
+    }
   }, [token]);
 
   async function apiRequest<T>(path: string, init?: RequestInit, authToken = token): Promise<T> {
@@ -90,6 +114,51 @@ export default function App() {
       setSelectedId(response.data[0]?.id ?? null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to load assignments.');
+    } finally {
+      setLoading('');
+    }
+  }
+
+  async function loadProfile(authToken = token) {
+    if (!authToken) return;
+    setError(null);
+    try {
+      const response = await apiRequest<{ data: TutorProfile }>('/tutor/profile', undefined, authToken);
+      setProfile(response.data);
+      setProfileForm({
+        teaching_mode: response.data.teaching_mode,
+        location: response.data.location,
+        hourly_rate_min: String(response.data.hourly_rate_min),
+        hourly_rate_max: String(response.data.hourly_rate_max),
+        is_active: response.data.is_active,
+        bio: response.data.bio ?? '',
+        availability_text: (response.data.availabilities ?? []).map((slot) => `${slot.day_of_week} ${slot.time_block}`).join('\n'),
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to load tutor profile.');
+    }
+  }
+
+  async function saveProfile() {
+    setLoading('Saving profile');
+    setError(null);
+    try {
+      const response = await apiRequest<{ data: TutorProfile }>('/tutor/profile', {
+        method: 'PATCH',
+        body: JSON.stringify({
+          teaching_mode: profileForm.teaching_mode,
+          location: profileForm.location,
+          hourly_rate_min: Number(profileForm.hourly_rate_min),
+          hourly_rate_max: Number(profileForm.hourly_rate_max),
+          is_active: profileForm.is_active,
+          bio: profileForm.bio,
+          availabilities: parseAvailability(profileForm.availability_text),
+        }),
+      });
+      setProfile(response.data);
+      await loadAssignments();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to save profile.');
     } finally {
       setLoading('');
     }
@@ -156,6 +225,33 @@ export default function App() {
             <Text selectable style={buttonTextStyle}>{loading || 'Refresh Assignments'}</Text>
           </Pressable>
 
+          {profile && (
+            <View style={{ padding: 16, borderRadius: 8, backgroundColor: '#fff', borderWidth: 1, borderColor: '#dbe3ef', gap: 10 }}>
+              <Text selectable style={{ color: '#64748b', fontSize: 12, fontWeight: '700', textTransform: 'uppercase' }}>Tutor Profile</Text>
+              <Text selectable style={{ color: '#172033', fontSize: 18, fontWeight: '800' }}>{profile.name}</Text>
+              <TextInput value={profileForm.location} onChangeText={(value) => setProfileForm((current) => ({ ...current, location: value }))} placeholder="Location" style={inputStyle} />
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                {(['home', 'online', 'hybrid'] as const).map((item) => (
+                  <Pressable key={item} onPress={() => setProfileForm((current) => ({ ...current, teaching_mode: item }))} style={{ paddingVertical: 9, paddingHorizontal: 12, borderRadius: 999, backgroundColor: profileForm.teaching_mode === item ? '#172033' : '#fff', borderWidth: 1, borderColor: '#dbe3ef' }}>
+                    <Text selectable style={{ color: profileForm.teaching_mode === item ? '#fff' : '#172033', fontWeight: '700' }}>{item}</Text>
+                  </Pressable>
+                ))}
+              </View>
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                <TextInput value={profileForm.hourly_rate_min} onChangeText={(value) => setProfileForm((current) => ({ ...current, hourly_rate_min: value }))} keyboardType="numeric" placeholder="Min rate" style={[inputStyle, { flex: 1 }]} />
+                <TextInput value={profileForm.hourly_rate_max} onChangeText={(value) => setProfileForm((current) => ({ ...current, hourly_rate_max: value }))} keyboardType="numeric" placeholder="Max rate" style={[inputStyle, { flex: 1 }]} />
+              </View>
+              <TextInput value={profileForm.bio} onChangeText={(value) => setProfileForm((current) => ({ ...current, bio: value }))} placeholder="Bio" multiline style={[inputStyle, { minHeight: 70 }]} />
+              <TextInput value={profileForm.availability_text} onChangeText={(value) => setProfileForm((current) => ({ ...current, availability_text: value }))} placeholder="weekday evening" multiline style={[inputStyle, { minHeight: 70 }]} />
+              <Pressable onPress={() => setProfileForm((current) => ({ ...current, is_active: !current.is_active }))} style={{ padding: 12, borderRadius: 8, backgroundColor: profileForm.is_active ? '#eaf7f5' : '#fff1f2' }}>
+                <Text selectable style={{ color: profileForm.is_active ? '#1f8a7a' : '#9f1239', fontWeight: '800' }}>{profileForm.is_active ? 'Active for matching' : 'Paused from matching'}</Text>
+              </Pressable>
+              <Pressable onPress={saveProfile} disabled={Boolean(loading)} style={primaryButtonStyle}>
+                <Text selectable style={buttonTextStyle}>Save Profile</Text>
+              </Pressable>
+            </View>
+          )}
+
           <View style={{ gap: 10 }}>
             {filtered.map((assignment) => (
               <Pressable key={assignment.id} onPress={() => setSelectedId(assignment.id)} style={{ padding: 16, borderRadius: 8, backgroundColor: selected?.id === assignment.id ? '#eaf7f5' : '#fff', borderWidth: 1, borderColor: selected?.id === assignment.id ? '#5eb6ad' : '#dbe3ef' }}>
@@ -198,6 +294,17 @@ function formatBudget(assignment: Assignment): string {
   if (!request) return 'Budget unavailable';
 
   return `SGD ${request.budget_min ?? 0}-${request.budget_max}/hr`;
+}
+
+function parseAvailability(value: string): { day_of_week: string; time_block: string }[] {
+  return value
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const [day_of_week, ...rest] = line.split(/\s+/);
+      return { day_of_week, time_block: rest.join(' ') || 'flexible' };
+    });
 }
 
 const inputStyle = {

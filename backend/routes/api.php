@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\MatchController;
 use App\Http\Controllers\Api\MessageDraftController;
 use App\Http\Controllers\Api\ReferenceDataController;
 use App\Http\Controllers\Api\StudentRequestController;
+use App\Http\Controllers\Api\TutorProfileController;
 use App\Http\Controllers\Api\TutorController;
 use Illuminate\Support\Facades\Route;
 
@@ -22,6 +23,11 @@ Route::middleware('api.token:admin,coordinator,tutor')->group(function (): void 
 
 Route::middleware('api.token:admin,coordinator,tutor')->group(function (): void {
     Route::get('/assignments', [AssignmentController::class, 'index']);
+});
+
+Route::middleware('api.token:tutor')->group(function (): void {
+    Route::get('/tutor/profile', [TutorProfileController::class, 'show']);
+    Route::patch('/tutor/profile', [TutorProfileController::class, 'update']);
 });
 
 Route::middleware('api.token:admin,coordinator')->group(function (): void {
