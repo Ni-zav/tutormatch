@@ -91,3 +91,20 @@ export type LoginResponse = {
     user: AuthUser;
   };
 };
+
+export type StudentRequestPayload = {
+  student_name: string;
+  parent_name?: string;
+  subject_id: number;
+  level_id: number;
+  location: string;
+  teaching_mode: 'home' | 'online' | 'hybrid';
+  budget_min?: number | null;
+  budget_max: number;
+  preferred_tutor_type?: 'part_time' | 'full_time' | 'ex_moe' | 'current_moe';
+  requested_day_of_week?: string;
+  requested_time_block?: string;
+  urgency: 'low' | 'normal' | 'urgent';
+  schedule_notes: string;
+  notes?: string;
+};

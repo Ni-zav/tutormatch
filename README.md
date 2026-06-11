@@ -103,7 +103,7 @@ Current local verification:
 ## Features
 
 - Coordinator dashboard summary
-- Student request list and detail view
+- Student request creation, list, and detail view
 - Tutor profile list
 - Deterministic tutor matching score
 - Database candidate prefilter before scoring
@@ -123,6 +123,8 @@ Current local verification:
 - `GET /api/auth/me`
 - `POST /api/auth/logout`
 - `GET /api/dashboard/summary`
+- `GET /api/subjects`
+- `GET /api/levels`
 - `GET /api/requests`
 - `POST /api/requests`
 - `GET /api/requests/{id}`
@@ -162,7 +164,7 @@ More detail is in:
 
 1. Start the backend and frontend.
 2. Open the dashboard.
-3. Select the seeded urgent Chemistry request.
+3. Create a new request or select the seeded urgent Chemistry request.
 4. Generate matches.
 5. Review the score breakdown and deterministic explanation.
 6. Shortlist a tutor, mark outreach, or move the match to follow-up, confirmed, or rejected.

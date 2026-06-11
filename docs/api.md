@@ -17,6 +17,8 @@ Most workflow routes require a bearer token from `POST /auth/login`. The local s
 | GET | `/auth/me` | Current authenticated user |
 | POST | `/auth/logout` | Revoke the current bearer token |
 | GET | `/dashboard/summary` | Coordinator/admin metrics |
+| GET | `/subjects` | Coordinator/admin subject options for request forms |
+| GET | `/levels` | Coordinator/admin level options for request forms |
 | GET | `/requests` | Coordinator/admin paginated student requests |
 | POST | `/requests` | Coordinator/admin create student request and assignment |
 | GET | `/requests/{id}` | Coordinator/admin request detail |

@@ -28,7 +28,7 @@ Expo Tutor Mini App
 - `backend/app/Http/Resources`: stable JSON response shapes.
 - `backend/app/Services/Matching`: deterministic scoring and explanations.
 - `backend/app/Services/AI`: provider boundary and mock fallback.
-- `frontend/src/api`: typed API client.
+- `frontend/src/api`: typed API client for auth, request creation, matching, workflow actions, tutors, and message drafts.
 - `frontend/src/types`: shared response types used by the dashboard.
 - `mobile/App.tsx`: compact tutor-side assignment workflow backed by `/api/auth/login`, `/api/assignments`, and application submission.
 

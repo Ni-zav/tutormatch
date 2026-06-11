@@ -67,6 +67,25 @@ class TutorMatchApiTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_coordinator_can_read_reference_data_for_request_form(): void
+    {
+        $token = $this->tokenForCoordinator();
+        $subject = Subject::create(['name' => 'Chemistry']);
+        $level = Level::create(['name' => 'Sec 4 O-Level']);
+
+        $this->withToken($token)
+            ->getJson('/api/subjects')
+            ->assertOk()
+            ->assertJsonPath('data.0.id', $subject->id)
+            ->assertJsonPath('data.0.name', 'Chemistry');
+
+        $this->withToken($token)
+            ->getJson('/api/levels')
+            ->assertOk()
+            ->assertJsonPath('data.0.id', $level->id)
+            ->assertJsonPath('data.0.name', 'Sec 4 O-Level');
+    }
+
     public function test_request_can_be_created_and_match_can_be_generated(): void
     {
         $token = $this->tokenForCoordinator();

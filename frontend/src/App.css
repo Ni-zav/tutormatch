@@ -83,7 +83,9 @@ nav {
 }
 
 button,
-select {
+select,
+input,
+textarea {
   font: inherit;
 }
 
@@ -132,6 +134,22 @@ select {
   background: #fff;
 }
 
+input,
+textarea {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  color: #172033;
+  background: #fff;
+}
+
+textarea {
+  min-height: 86px;
+  resize: vertical;
+}
+
 .session-tools {
   display: flex;
   flex-wrap: wrap;
@@ -160,9 +178,47 @@ select {
 .grid,
 .table-list,
 .cards,
-.detail-layout {
+.detail-layout,
+.request-form {
   display: grid;
   gap: 14px;
+}
+
+.request-form {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 16px;
+}
+
+.request-form label {
+  display: grid;
+  gap: 6px;
+  color: #475569;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.request-form label.wide {
+  grid-column: span 3;
+}
+
+.request-form select {
+  min-width: 0;
+  width: 100%;
+}
+
+.request-form button {
+  width: fit-content;
+  border: 0;
+  border-radius: 8px;
+  padding: 11px 14px;
+  background: #1f8a7a;
+  color: #fff;
+  cursor: pointer;
+}
+
+.request-form button:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
 }
 
 .four {
@@ -331,7 +387,8 @@ dd {
 @media (max-width: 900px) {
   .app-shell,
   .detail-layout,
-  .four {
+  .four,
+  .request-form {
     grid-template-columns: 1fr;
   }
 
@@ -359,5 +416,9 @@ dd {
 
   .session-tools {
     justify-content: stretch;
+  }
+
+  .request-form label.wide {
+    grid-column: auto;
   }
 }
