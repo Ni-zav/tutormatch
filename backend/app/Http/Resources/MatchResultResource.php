@@ -16,6 +16,10 @@ class MatchResultResource extends JsonResource
             'total_score' => $this->total_score,
             'score_breakdown' => $this->score_breakdown,
             'deterministic_explanation' => $this->deterministic_explanation,
+            'status' => $this->status,
+            'outreach_status' => $this->outreach_status,
+            'coordinator_notes' => $this->coordinator_notes,
+            'status_updated_at' => $this->status_updated_at,
             'generated_at' => $this->generated_at,
         ];
     }

@@ -12,11 +12,11 @@ The local demo uses SQLite for speed. The schema uses Laravel migrations and por
 - `student_requests`: parent/student request details.
 - `assignments`: published assignment generated from a request.
 - `applications`: tutor applications with duplicate prevention.
-- `match_results`: deterministic scores and factor breakdowns.
+- `match_results`: deterministic scores, factor breakdowns, coordinator workflow status, outreach status, and notes.
 - `message_drafts`: generated coordinator messages.
 
 ## Indexes
 
-Indexes are added for fields likely to be filtered heavily: tutor type, teaching mode, location, rates, request subject/level, request status, urgency, created date, assignment status, application status, and match score by request.
+Indexes are added for fields likely to be filtered heavily: tutor active status, tutor type, teaching mode, location, rates, request subject/level, request status, urgency, created date, assignment status, application status, match workflow status, outreach status, and match score by request.
 
 These matter because assignment operations often involve repeated filtering across fresh requests and available tutor pools. The proof-of-concept also uses eager loading for detail endpoints to avoid obvious N+1 query behavior.

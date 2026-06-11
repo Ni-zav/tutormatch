@@ -25,6 +25,7 @@ Route::middleware('api.token:admin,coordinator')->group(function (): void {
     Route::post('/requests/{request}/generate-matches', [MatchController::class, 'generate'])->middleware('throttle:20,1');
     Route::apiResource('tutors', TutorController::class)->only(['index', 'show']);
     Route::post('/matches/{matchResult}/explain', [MatchController::class, 'explain'])->middleware('throttle:30,1');
+    Route::patch('/matches/{matchResult}/workflow', [MatchController::class, 'updateWorkflow']);
     Route::post('/message-drafts', MessageDraftController::class)->middleware('throttle:30,1');
 });
 

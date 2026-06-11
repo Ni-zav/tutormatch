@@ -261,19 +261,23 @@ dd {
 
 .actions,
 .factors,
-.meta-line {
+.meta-line,
+.workflow-line,
+.match-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
 
-.actions button {
+.actions button,
+.match-actions button {
   padding: 10px 12px;
   background: #1f8a7a;
   color: #fff;
 }
 
-.actions button:disabled {
+.actions button:disabled,
+.match-actions button:disabled {
   background: #94a3b8;
   cursor: not-allowed;
 }
@@ -296,11 +300,26 @@ dd {
 
 .match-head span,
 .factors span,
+.workflow-line span,
 .meta-line span {
   border-radius: 999px;
   background: #edf2f7;
   padding: 6px 9px;
   font-size: 0.82rem;
+}
+
+.workflow-line {
+  margin-top: 10px;
+}
+
+.match-actions {
+  margin-top: 12px;
+}
+
+.match-actions button {
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
 }
 
 .draft-body {

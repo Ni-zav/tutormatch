@@ -47,6 +47,10 @@ export type MatchResult = {
   total_score: number;
   score_breakdown: Record<string, number>;
   deterministic_explanation: string;
+  status: 'recommended' | 'shortlisted' | 'accepted' | 'rejected' | 'confirmed' | 'needs_follow_up' | 'closed';
+  outreach_status: 'not_contacted' | 'drafted' | 'contacted' | 'responded' | 'no_response';
+  coordinator_notes: string | null;
+  status_updated_at: string | null;
   generated_at: string;
 };
 

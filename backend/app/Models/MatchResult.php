@@ -14,6 +14,10 @@ class MatchResult extends Model
         'score_breakdown',
         'deterministic_explanation',
         'generated_at',
+        'status',
+        'outreach_status',
+        'coordinator_notes',
+        'status_updated_at',
     ];
 
     protected function casts(): array
@@ -21,6 +25,7 @@ class MatchResult extends Model
         return [
             'score_breakdown' => 'array',
             'generated_at' => 'datetime',
+            'status_updated_at' => 'datetime',
         ];
     }
 

@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Assignment;
 use App\Models\Level;
+use App\Models\MatchResult;
 use App\Models\StudentRequest;
 use App\Models\Subject;
 use App\Models\Tutor;
@@ -138,6 +139,63 @@ class TutorMatchApiTest extends TestCase
             ->assertJsonPath('data.generated_by', 'mock_ai');
     }
 
+    public function test_coordinator_can_update_match_workflow_status(): void
+    {
+        $token = $this->tokenForCoordinator();
+        [$studentRequest, $tutor] = $this->matchFixture();
+        $match = MatchResult::create([
+            'student_request_id' => $studentRequest->id,
+            'tutor_id' => $tutor->id,
+            'total_score' => 90,
+            'score_breakdown' => ['subject' => 30],
+            'deterministic_explanation' => 'Strong fit.',
+            'generated_at' => now(),
+        ]);
+
+        $this->withToken($token)->patchJson("/api/matches/{$match->id}/workflow", [
+            'status' => 'shortlisted',
+            'outreach_status' => 'contacted',
+            'coordinator_notes' => 'Parent wants a weekend trial.',
+        ])
+            ->assertOk()
+            ->assertJsonPath('data.status', 'shortlisted')
+            ->assertJsonPath('data.outreach_status', 'contacted');
+
+        $this->assertDatabaseHas('match_results', [
+            'id' => $match->id,
+            'status' => 'shortlisted',
+            'outreach_status' => 'contacted',
+            'coordinator_notes' => 'Parent wants a weekend trial.',
+        ]);
+        $this->assertDatabaseHas('student_requests', [
+            'id' => $studentRequest->id,
+            'status' => 'shortlisted',
+        ]);
+    }
+
+    public function test_tutor_role_cannot_update_match_workflow_status(): void
+    {
+        $token = $this->tokenFor(User::create([
+            'name' => 'Tutor',
+            'email' => 'workflow-tutor@example.test',
+            'password' => 'password',
+            'role' => 'tutor',
+        ]));
+        [$studentRequest, $tutor] = $this->matchFixture();
+        $match = MatchResult::create([
+            'student_request_id' => $studentRequest->id,
+            'tutor_id' => $tutor->id,
+            'total_score' => 90,
+            'score_breakdown' => ['subject' => 30],
+            'deterministic_explanation' => 'Strong fit.',
+            'generated_at' => now(),
+        ]);
+
+        $this->withToken($token)->patchJson("/api/matches/{$match->id}/workflow", [
+            'status' => 'confirmed',
+        ])->assertForbidden();
+    }
+
     private function tokenForCoordinator(): string
     {
         return $this->tokenFor(User::create([
@@ -157,5 +215,34 @@ class TutorMatchApiTest extends TestCase
         ])->save();
 
         return $token;
+    }
+
+    private function matchFixture(): array
+    {
+        $subject = Subject::create(['name' => 'Chemistry']);
+        $level = Level::create(['name' => 'Sec 4 O-Level']);
+        $studentRequest = StudentRequest::create([
+            'student_name' => 'Demo Student A',
+            'parent_name' => 'Mrs Tan',
+            'subject_id' => $subject->id,
+            'level_id' => $level->id,
+            'location' => 'Bishan',
+            'teaching_mode' => 'home',
+            'budget_max' => 65,
+            'urgency' => 'urgent',
+            'schedule_notes' => 'Weekend mornings preferred',
+        ]);
+        $tutor = Tutor::create([
+            'name' => 'Daniel Lim',
+            'tutor_type' => 'ex_moe',
+            'teaching_mode' => 'hybrid',
+            'location' => 'Bishan',
+            'hourly_rate_min' => 55,
+            'hourly_rate_max' => 70,
+            'acceptance_rate' => 0.8,
+            'success_score' => 0.8,
+        ]);
+
+        return [$studentRequest, $tutor];
     }
 }

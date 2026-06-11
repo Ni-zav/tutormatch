@@ -89,9 +89,9 @@ npm run build
 
 Current local verification:
 
-- Backend migrations and seed data work.
-- `php artisan route:list --path=api` shows 12 API routes.
-- `php artisan test` passes: 4 tests, 14 assertions.
+- Backend migrations and seed data should be verified with `php artisan migrate:fresh --seed` when PHP is available.
+- `php artisan route:list --path=api` should show the protected auth, request, matching, tutor, application, and message draft routes.
+- `php artisan test` covers auth, matching, workflow status updates, and AI mock behavior when PHP is available.
 - `npm run build` passes for the frontend.
 - Mobile TypeScript validation passes with `node_modules/.bin/tsc --noEmit`.
 - `npm install` in `mobile/` currently reports 10 moderate audit findings from the Expo dependency tree; review with `npm audit` before production use.
@@ -104,6 +104,7 @@ Current local verification:
 - Deterministic tutor matching score
 - Database candidate prefilter before scoring
 - Factor breakdown: subject, level, location/mode, budget, availability, tutor type, history
+- Coordinator workflow actions for shortlist, contacted, follow-up, confirmed, and rejected match states
 - AI/mock match explanation
 - WhatsApp-style message draft endpoint and UI
 - Expo tutor mini flow with feed, filters, detail, and bulk apply mock
@@ -126,6 +127,7 @@ Current local verification:
 - `GET /api/tutors/{id}`
 - `POST /api/assignments/{id}/applications`
 - `POST /api/matches/{id}/explain`
+- `PATCH /api/matches/{id}/workflow`
 - `POST /api/message-drafts`
 
 ## Architecture
@@ -154,9 +156,10 @@ More detail is in:
 3. Select the seeded urgent Chemistry request.
 4. Generate matches.
 5. Review the score breakdown and deterministic explanation.
-6. Generate a match explanation.
-7. Draft a client or tutor WhatsApp message.
-8. Explain the production tradeoffs: auth, privacy, queues, tuning, WordPress intake, and tutor mobile flow.
+6. Shortlist a tutor, mark outreach, or move the match to follow-up, confirmed, or rejected.
+7. Generate a match explanation.
+8. Draft a client or tutor WhatsApp message.
+9. Explain the production tradeoffs: auth, privacy, queues, tuning, WordPress intake, and tutor mobile flow.
 
 ## Production Next Steps
 

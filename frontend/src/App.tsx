@@ -147,6 +147,24 @@ function App() {
     }
   }
 
+  async function updateMatchWorkflow(id: number, status: MatchResult['status'], outreach_status?: MatchResult['outreach_status']) {
+    setLoading('Updating match workflow');
+    setError(null);
+    try {
+      const response = await api.updateMatchWorkflow(id, { status, outreach_status });
+      setMatches((current) => current.map((match) => (match.id === id ? response.data : match)));
+      if (selectedRequestId) {
+        const requestResponse = await api.request(selectedRequestId);
+        setSelectedRequest(requestResponse.data);
+        setRequests((current) => current.map((item) => (item.id === selectedRequestId ? requestResponse.data : item)));
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to update match workflow.');
+    } finally {
+      setLoading('');
+    }
+  }
+
   const topMatch = matches[0];
   const requestOptions = useMemo(() => requests.map((item) => ({ id: item.id, label: `${item.student_name} - ${item.subject?.name ?? 'Subject'}` })), [requests]);
 
@@ -201,6 +219,7 @@ function App() {
             onExplain={explainTopMatch}
             onDraftClient={() => draftMessage('client')}
             onDraftTutor={() => draftMessage('tutor')}
+            onUpdateMatch={updateMatchWorkflow}
           />
         )}
         {view === 'tutors' && <Tutors tutors={tutors} />}
@@ -264,7 +283,7 @@ function Requests({ requests, onOpen }: { requests: StudentRequest[]; onOpen: (i
   );
 }
 
-function RequestDetail({ request, matches, aiNote, onGenerate, onExplain, onDraftClient, onDraftTutor }: {
+function RequestDetail({ request, matches, aiNote, onGenerate, onExplain, onDraftClient, onDraftTutor, onUpdateMatch }: {
   request: StudentRequest;
   matches: MatchResult[];
   aiNote: string | null;
@@ -272,6 +291,7 @@ function RequestDetail({ request, matches, aiNote, onGenerate, onExplain, onDraf
   onExplain: () => void;
   onDraftClient: () => void;
   onDraftTutor: () => void;
+  onUpdateMatch: (id: number, status: MatchResult['status'], outreach_status?: MatchResult['outreach_status']) => void;
 }) {
   return (
     <div className="detail-layout">
@@ -298,9 +318,20 @@ function RequestDetail({ request, matches, aiNote, onGenerate, onExplain, onDraf
         {matches.map((match) => (
           <article className="match" key={match.id}>
             <div className="match-head"><strong>{match.tutor.name}</strong><span>{match.total_score}/100</span></div>
+            <div className="workflow-line">
+              <span>{match.status}</span>
+              <span>{match.outreach_status}</span>
+            </div>
             <p>{match.deterministic_explanation}</p>
             <div className="factors">
               {Object.entries(match.score_breakdown).map(([factor, score]) => <span key={factor}>{factor}: {score}</span>)}
+            </div>
+            <div className="match-actions">
+              <button onClick={() => onUpdateMatch(match.id, 'shortlisted')}>Shortlist</button>
+              <button onClick={() => onUpdateMatch(match.id, match.status, 'contacted')}>Mark Contacted</button>
+              <button onClick={() => onUpdateMatch(match.id, 'needs_follow_up')}>Follow Up</button>
+              <button onClick={() => onUpdateMatch(match.id, 'confirmed')}>Confirm</button>
+              <button onClick={() => onUpdateMatch(match.id, 'rejected')}>Reject</button>
             </div>
           </article>
         ))}

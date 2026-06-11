@@ -26,6 +26,7 @@ Most workflow routes require a bearer token from `POST /auth/login`. The local s
 | GET | `/tutors/{id}` | Coordinator/admin tutor profile |
 | POST | `/assignments/{id}/applications` | Admin/coordinator/tutor application submission |
 | POST | `/matches/{id}/explain` | Coordinator/admin AI/mock match explanation |
+| PATCH | `/matches/{id}/workflow` | Coordinator/admin shortlist, outreach, and outcome status update |
 | POST | `/message-drafts` | Coordinator/admin AI/mock message draft |
 
 ## Login Example
@@ -77,8 +78,23 @@ Use the returned `data.token` as `Authorization: Bearer <token>`.
         "tutor_type": 5,
         "history": 4
       },
-      "deterministic_explanation": "Daniel Lim scores 99/100 because..."
+      "deterministic_explanation": "Daniel Lim scores 99/100 because...",
+      "status": "recommended",
+      "outreach_status": "not_contacted",
+      "coordinator_notes": null
     }
   ]
 }
 ```
+
+## Match Workflow Update Example
+
+```json
+{
+  "status": "shortlisted",
+  "outreach_status": "contacted",
+  "coordinator_notes": "Parent wants a weekend trial."
+}
+```
+
+Allowed match statuses are `recommended`, `shortlisted`, `accepted`, `rejected`, `confirmed`, `needs_follow_up`, and `closed`. Allowed outreach statuses are `not_contacted`, `drafted`, `contacted`, `responded`, and `no_response`.

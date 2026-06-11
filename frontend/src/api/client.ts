@@ -41,6 +41,8 @@ export const api = {
   matches: (id: number) => request<Paginated<MatchResult>>(`/requests/${id}/matches`),
   generateMatches: (id: number) => request<{ data: MatchResult[] }>(`/requests/${id}/generate-matches`, { method: 'POST' }),
   tutors: () => request<Paginated<Tutor>>('/tutors'),
+  updateMatchWorkflow: (id: number, payload: { status: MatchResult['status']; outreach_status?: MatchResult['outreach_status']; coordinator_notes?: string }) =>
+    request<{ data: MatchResult }>(`/matches/${id}/workflow`, { method: 'PATCH', body: JSON.stringify(payload) }),
   explainMatch: (id: number) =>
     request<{ summary: string; strengths: string[]; risks: string[]; coordinator_note: string; generated_by: string }>(`/matches/${id}/explain`, { method: 'POST' }),
   createMessageDraft: (payload: { student_request_id: number; tutor_id?: number; match_result_id?: number; audience: 'client' | 'tutor'; channel: 'whatsapp' }) =>
