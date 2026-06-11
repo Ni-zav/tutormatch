@@ -146,6 +146,7 @@ More detail is in:
 - `docs/database.md`
 - `docs/matching.md`
 - `docs/ai.md`
+- `docs/deployment.md`
 - `docs/domain-research.md`
 - `docs/interview-guide.md`
 

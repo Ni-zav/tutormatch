@@ -1,0 +1,12 @@
+{
+	email admin@example.com
+}
+
+tutormatch.example.com {
+	encode gzip zstd
+
+	@api path /api/* /up
+	reverse_proxy @api backend:8000
+
+	reverse_proxy frontend:80
+}

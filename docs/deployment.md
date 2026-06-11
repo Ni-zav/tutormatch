@@ -1,0 +1,89 @@
+# Deployment
+
+TutorMatch is intended to stay cheap and boring at MVP scale: static frontend, Laravel API on a small VPS, PostgreSQL on the same VPS, database queue first, and Caddy for HTTPS. Move individual pieces out only when traffic or operational risk justifies it.
+
+## Recommended Cheap Stack
+
+- Frontend: Cloudflare Pages, Netlify, or the included static Caddy container.
+- Backend: Laravel container on a small VPS.
+- Database: PostgreSQL on the same VPS at first.
+- Queue: Laravel database queue worker.
+- HTTPS/reverse proxy: Caddy.
+- CI: GitHub Actions running backend tests and frontend build.
+
+## Local Prod-Like Compose
+
+Copy `backend/.env.example` to `backend/.env`, set a real `APP_KEY`, database password, `APP_ENV=production`, `APP_DEBUG=false`, `APP_URL`, and `FRONTEND_ALLOWED_ORIGINS`.
+
+```bash
+docker compose -f docker-compose.prod.example.yml build
+docker compose -f docker-compose.prod.example.yml up -d postgres
+docker compose -f docker-compose.prod.example.yml run --rm backend php artisan migrate --force
+docker compose -f docker-compose.prod.example.yml up -d
+```
+
+Use `GET /api/health` for uptime checks. Laravel's built-in `/up` route is also exposed through the example Caddy config.
+
+## Production Environment
+
+Required backend variables:
+
+- `APP_ENV=production`
+- `APP_DEBUG=false`
+- `APP_KEY`
+- `APP_URL`
+- `FRONTEND_ALLOWED_ORIGINS`
+- `DB_CONNECTION=pgsql`
+- `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`
+- `QUEUE_CONNECTION=database`
+- `CACHE_STORE=database`
+- `SESSION_DRIVER=database`
+- `AI_PROVIDER=mock` unless a real provider is intentionally configured
+
+For real AI, set `AI_PROVIDER=openai`, `OPENAI_API_KEY`, and `OPENAI_MODEL`. Do not make paid AI required for core matching.
+
+## Release Steps
+
+1. Pull the new commit on the VPS.
+2. Rebuild containers.
+3. Run `php artisan migrate --force`.
+4. Restart `backend`, `queue`, `frontend`, and `caddy`.
+5. Check `/api/health`.
+6. Log in with a non-demo production user and verify request, match, and workflow pages.
+
+## Queue And Scheduler
+
+Run one queue worker for now:
+
+```bash
+php artisan queue:work --tries=3 --timeout=60
+```
+
+The current app does not require Laravel Scheduler. Add it only when scheduled reminders, cleanup jobs, or sync tasks exist.
+
+## Backups
+
+For the single-VPS PostgreSQL setup, schedule a daily dump and keep at least 7 daily and 4 weekly backups off the VPS.
+
+```bash
+pg_dump "$DATABASE_URL" | gzip > "tutormatch-$(date +%Y%m%d).sql.gz"
+```
+
+Restore drill:
+
+```bash
+gunzip -c tutormatch-YYYYMMDD.sql.gz | psql "$DATABASE_URL"
+php artisan migrate --force
+```
+
+## Rollback
+
+Keep the previous image or commit available. If a deploy fails after migrations, prefer a forward fix unless the migration is known reversible and no production writes happened. Always snapshot the database before risky schema changes.
+
+## Upgrade Points
+
+- Move PostgreSQL to managed hosting when backups, uptime, or storage become operational risk.
+- Move queues to Redis when database queue latency becomes visible.
+- Replace demo bearer tokens with Sanctum or another expiring production auth flow before real users.
+- Add object storage only when uploaded documents or media become part of the workflow.
+- Add audit logs before production use with real student, parent, or tutor data.
