@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\AuditLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -11,7 +12,7 @@ use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
-    public function login(Request $request): array
+    public function login(Request $request, AuditLogger $auditLogger): array
     {
         $credentials = $request->validate([
             'email' => ['required', 'email'],
@@ -31,6 +32,10 @@ class AuthController extends Controller
             'api_token_hash' => hash('sha256', $plainToken),
             'api_token_issued_at' => now(),
         ])->save();
+        $request->setUserResolver(fn () => $user);
+        $auditLogger->record($request, 'auth.login', $user, [
+            'role' => $user->role,
+        ]);
 
         return [
             'data' => [
@@ -47,12 +52,14 @@ class AuthController extends Controller
         ];
     }
 
-    public function logout(Request $request): array
+    public function logout(Request $request, AuditLogger $auditLogger): array
     {
+        $user = $request->user();
         $request->user()->forceFill([
             'api_token_hash' => null,
             'api_token_issued_at' => null,
         ])->save();
+        $auditLogger->record($request, 'auth.logout', $user);
 
         return ['message' => 'Logged out.'];
     }

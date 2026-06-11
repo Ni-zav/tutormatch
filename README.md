@@ -109,6 +109,7 @@ Current local verification:
 - Database candidate prefilter before scoring
 - Factor breakdown: subject, level, location/mode, budget, availability, tutor type, history
 - Coordinator workflow actions for shortlist, contacted, follow-up, confirmed, and rejected match states
+- Structured audit logs for auth, request creation, match generation, workflow updates, message drafts, and tutor applications
 - AI/mock match explanation
 - WhatsApp-style message draft endpoint and UI
 - Expo tutor mini flow with feed, filters, detail, and bulk apply mock
@@ -172,7 +173,7 @@ More detail is in:
 ## Production Next Steps
 
 - Replace the demo bearer-token login with Sanctum or another expiring token/session flow before real users.
-- Add audit logs for matching decisions and generated messages.
+- Add audit log review/export screens for administrators.
 - Add queue-based match generation for high-volume workloads.
 - Add privacy controls and prompt redaction before real AI provider use.
 - Tune scoring weights with placement and retention data.

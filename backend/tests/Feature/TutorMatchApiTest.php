@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Assignment;
+use App\Models\AuditLog;
 use App\Models\Level;
 use App\Models\MatchResult;
 use App\Models\StudentRequest;
@@ -107,6 +108,17 @@ class TutorMatchApiTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.0.total_score', 99)
             ->assertJsonPath('data.0.score_breakdown.subject', 30);
+
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'request.created',
+            'auditable_type' => StudentRequest::class,
+            'auditable_id' => $requestId,
+        ]);
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'matches.generated',
+            'auditable_type' => StudentRequest::class,
+            'auditable_id' => $requestId,
+        ]);
     }
 
     public function test_message_draft_uses_mock_ai_fallback(): void
@@ -141,6 +153,10 @@ class TutorMatchApiTest extends TestCase
             ->assertJsonPath('data.prompt_version', 'message-draft-v1')
             ->assertJsonPath('data.fallback_used', false)
             ->assertJsonPath('data.generation_metadata.provider', 'mock');
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'message_draft.created',
+            'auditable_type' => \App\Models\MessageDraft::class,
+        ]);
     }
 
     public function test_openai_message_draft_falls_back_to_mock_with_metadata(): void
@@ -214,6 +230,11 @@ class TutorMatchApiTest extends TestCase
         $this->assertDatabaseHas('student_requests', [
             'id' => $studentRequest->id,
             'status' => 'shortlisted',
+        ]);
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'match.workflow_updated',
+            'auditable_type' => MatchResult::class,
+            'auditable_id' => $match->id,
         ]);
     }
 
@@ -307,6 +328,10 @@ class TutorMatchApiTest extends TestCase
             'assignment_id' => $assignment->id,
             'tutor_id' => $otherTutor->id,
         ]);
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'application.applied',
+            'auditable_type' => \App\Models\Application::class,
+        ]);
     }
 
     public function test_tutor_can_withdraw_own_application(): void
@@ -341,6 +366,10 @@ class TutorMatchApiTest extends TestCase
             'tutor_id' => $tutor->id,
             'status' => 'withdrawn',
         ]);
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'application.withdrawn',
+            'auditable_type' => \App\Models\Application::class,
+        ]);
 
         $this->withToken($token)
             ->postJson("/api/assignments/{$assignment->id}/applications", [
@@ -369,6 +398,30 @@ class TutorMatchApiTest extends TestCase
         ])->save();
 
         return $token;
+    }
+
+    public function test_login_and_logout_are_audited(): void
+    {
+        User::create([
+            'name' => 'Coordinator',
+            'email' => 'audit-coordinator@example.test',
+            'password' => 'password',
+            'role' => 'coordinator',
+        ]);
+
+        $login = $this->postJson('/api/auth/login', [
+            'email' => 'audit-coordinator@example.test',
+            'password' => 'password',
+        ])->assertOk();
+
+        $this->withToken($login->json('data.token'))
+            ->postJson('/api/auth/logout')
+            ->assertOk();
+
+        $this->assertSame(
+            ['auth.login', 'auth.logout'],
+            AuditLog::query()->orderBy('id')->pluck('action')->all()
+        );
     }
 
     private function matchFixture(array $tutorOverrides = []): array

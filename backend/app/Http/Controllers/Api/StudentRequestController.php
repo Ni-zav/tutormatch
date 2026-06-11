@@ -7,6 +7,7 @@ use App\Http\Requests\StoreStudentRequestRequest;
 use App\Http\Resources\StudentRequestResource;
 use App\Models\Assignment;
 use App\Models\StudentRequest;
+use App\Services\AuditLogger;
 
 class StudentRequestController extends Controller
 {
@@ -22,16 +23,21 @@ class StudentRequestController extends Controller
         return StudentRequestResource::collection($requests);
     }
 
-    public function store(StoreStudentRequestRequest $request)
+    public function store(StoreStudentRequestRequest $request, AuditLogger $auditLogger)
     {
         $studentRequest = StudentRequest::create($request->validated());
         $studentRequest->load(['subject', 'level']);
 
-        Assignment::create([
+        $assignment = Assignment::create([
             'student_request_id' => $studentRequest->id,
             'title' => "{$studentRequest->level->name} {$studentRequest->subject->name} in {$studentRequest->location}",
             'status' => 'open',
             'published_at' => now(),
+        ]);
+        $auditLogger->record($request, 'request.created', $studentRequest, [
+            'assignment_id' => $assignment->id,
+            'subject_id' => $studentRequest->subject_id,
+            'level_id' => $studentRequest->level_id,
         ]);
 
         return (new StudentRequestResource($studentRequest->load('assignment')))->response()->setStatusCode(201);

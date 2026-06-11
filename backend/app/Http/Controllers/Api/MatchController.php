@@ -7,6 +7,7 @@ use App\Http\Requests\UpdateMatchWorkflowRequest;
 use App\Http\Resources\MatchResultResource;
 use App\Models\MatchResult;
 use App\Models\StudentRequest;
+use App\Services\AuditLogger;
 use App\Services\AI\AiAssistant;
 use App\Services\Matching\TutorMatchingService;
 
@@ -22,10 +23,14 @@ class MatchController extends Controller
         return MatchResultResource::collection($matches);
     }
 
-    public function generate(StudentRequest $request, TutorMatchingService $matchingService)
+    public function generate(StudentRequest $request, TutorMatchingService $matchingService, AuditLogger $auditLogger)
     {
         $request->update(['status' => 'matching']);
         $matches = $matchingService->generateForRequest($request);
+        $auditLogger->record(request(), 'matches.generated', $request, [
+            'match_count' => $matches->count(),
+            'top_score' => $matches->max('total_score'),
+        ]);
 
         return MatchResultResource::collection($matches->load('tutor'));
     }
@@ -35,9 +40,13 @@ class MatchController extends Controller
         return $aiAssistant->explainMatch($matchResult);
     }
 
-    public function updateWorkflow(UpdateMatchWorkflowRequest $request, MatchResult $matchResult): MatchResultResource
+    public function updateWorkflow(UpdateMatchWorkflowRequest $request, MatchResult $matchResult, AuditLogger $auditLogger): MatchResultResource
     {
         $validated = $request->validated();
+        $previous = [
+            'status' => $matchResult->status,
+            'outreach_status' => $matchResult->outreach_status,
+        ];
         $matchResult->fill([
             'status' => $validated['status'],
             'outreach_status' => array_key_exists('outreach_status', $validated) ? $validated['outreach_status'] : $matchResult->outreach_status,
@@ -57,6 +66,14 @@ class MatchController extends Controller
         if ($studentRequestStatus) {
             $matchResult->studentRequest()->update(['status' => $studentRequestStatus]);
         }
+        $auditLogger->record($request, 'match.workflow_updated', $matchResult, [
+            'previous' => $previous,
+            'current' => [
+                'status' => $matchResult->status,
+                'outreach_status' => $matchResult->outreach_status,
+            ],
+            'student_request_id' => $matchResult->student_request_id,
+        ]);
 
         return new MatchResultResource($matchResult->load('tutor'));
     }

@@ -7,11 +7,12 @@ use App\Http\Requests\StoreMessageDraftRequest;
 use App\Models\MessageDraft;
 use App\Models\StudentRequest;
 use App\Models\Tutor;
+use App\Services\AuditLogger;
 use App\Services\AI\AiAssistant;
 
 class MessageDraftController extends Controller
 {
-    public function __invoke(StoreMessageDraftRequest $request, AiAssistant $aiAssistant)
+    public function __invoke(StoreMessageDraftRequest $request, AiAssistant $aiAssistant, AuditLogger $auditLogger)
     {
         $validated = $request->validated();
         $studentRequest = StudentRequest::with(['subject', 'level'])->findOrFail($validated['student_request_id']);
@@ -29,6 +30,14 @@ class MessageDraftController extends Controller
             'prompt_version' => $draft['prompt_version'] ?? 'message-draft-v1',
             'fallback_used' => $draft['fallback_used'] ?? false,
             'generation_metadata' => $draft['generation_metadata'] ?? null,
+        ]);
+        $auditLogger->record($request, 'message_draft.created', $messageDraft, [
+            'student_request_id' => $studentRequest->id,
+            'tutor_id' => $tutor?->id,
+            'audience' => $messageDraft->audience,
+            'channel' => $messageDraft->channel,
+            'generated_by' => $messageDraft->generated_by,
+            'fallback_used' => $messageDraft->fallback_used,
         ]);
 
         return response()->json(['data' => $messageDraft], 201);

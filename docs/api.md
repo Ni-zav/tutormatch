@@ -110,3 +110,7 @@ Message draft responses include `generated_by`, `prompt_version`, `fallback_used
 `GET /assignments` returns open published assignments. For tutor users, each row includes that tutor's current `application_status` when they have already applied.
 
 Tutor users do not need to send `tutor_id` when applying or withdrawing. If a tutor sends a different `tutor_id`, the API still uses the authenticated tutor profile.
+
+## Audit Logging
+
+The API writes internal audit rows for login/logout, request creation, match generation, match workflow updates, message draft creation, tutor applications, and withdrawals. Audit logs are not exposed through a public endpoint in the current MVP.

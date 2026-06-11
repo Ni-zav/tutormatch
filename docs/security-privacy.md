@@ -10,12 +10,13 @@ TutorMatch may handle student, parent, tutor, schedule, budget, location, and le
 - `AI_PROVIDER=mock` is the default so the app works without sending data to a paid external AI provider.
 - CORS origins are configured through `FRONTEND_ALLOWED_ORIGINS`.
 - Public health checks avoid secrets and personal data.
+- Structured audit logs record key operational events with user id, action, target object, compact metadata, IP address, and user agent.
 
 ## Production Requirements Before Real Users
 
 - Replace demo bearer tokens with expiring Sanctum tokens or a comparable production auth flow.
 - Use strong passwords, secure reset flows, and role review for admin/coordinator access.
-- Add audit logs for login, request creation, match generation, shortlist decisions, status changes, and message drafts.
+- Add audit log review/export screens and retention policy before real production use.
 - Store only the personal data needed for assignment operations.
 - Add retention rules for stale requests, rejected matches, old message drafts, and inactive tutor profiles.
 - Encrypt production backups and restrict restore access.
