@@ -16,7 +16,11 @@ class AssignmentController extends Controller
 
         $assignments = Assignment::query()
             ->with(['studentRequest.subject', 'studentRequest.level'])
-            ->with(['applications' => fn ($query) => $tutorId ? $query->where('tutor_id', $tutorId) : $query->whereRaw('1 = 0')])
+            ->with([
+                'applications' => fn ($query) => $user->role === 'tutor'
+                    ? $query->where('tutor_id', $tutorId)
+                    : $query->with('tutor')->latest('applied_at'),
+            ])
             ->where('status', 'open')
             ->whereNotNull('published_at')
             ->latest('published_at')

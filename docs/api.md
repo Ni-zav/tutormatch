@@ -28,7 +28,7 @@ Most workflow routes require a bearer token from `POST /auth/login`. Tokens are 
 | POST | `/requests/{id}/generate-matches` | Coordinator/admin generate deterministic matches |
 | GET | `/tutors` | Coordinator/admin paginated tutors |
 | GET | `/tutors/{id}` | Coordinator/admin tutor profile |
-| GET | `/assignments` | Admin/coordinator/tutor open assignment feed with current tutor application status |
+| GET | `/assignments` | Open assignment feed; tutors see their own application status, coordinators/admins see submitted applications |
 | POST | `/assignments/{id}/applications` | Admin/coordinator/tutor application submission |
 | DELETE | `/assignments/{id}/applications` | Admin/coordinator/tutor application withdrawal |
 | POST | `/matches/{id}/explain` | Coordinator/admin AI/mock match explanation |
@@ -111,7 +111,7 @@ Message draft responses include `generated_by`, `prompt_version`, `fallback_used
 
 ## Tutor Assignment Feed
 
-`GET /assignments` returns open published assignments. For tutor users, each row includes that tutor's current `application_status` when they have already applied.
+`GET /assignments` returns open published assignments. For tutor users, each row includes that tutor's current `application_status` when they have already applied and does not expose other tutor applications. For coordinator/admin users, each row includes an `applications` array with tutor id, tutor name, status, message, and applied timestamp for review.
 
 Tutor users do not need to send `tutor_id` when applying or withdrawing. If a tutor sends a different `tutor_id`, the API still uses the authenticated tutor profile.
 

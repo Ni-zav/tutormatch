@@ -1,4 +1,4 @@
-import type { AuthUser, DashboardSummary, LevelRef, LoginResponse, MatchResult, MessageDraft, Paginated, StudentRequest, StudentRequestPayload, SubjectRef, Tutor } from '../types/api';
+import type { Assignment, AuthUser, DashboardSummary, LevelRef, LoginResponse, MatchResult, MessageDraft, Paginated, StudentRequest, StudentRequestPayload, SubjectRef, Tutor } from '../types/api';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000/api';
 let authToken = localStorage.getItem('tutormatch_api_token');
@@ -36,6 +36,7 @@ export const api = {
   me: () => request<{ data: AuthUser }>('/auth/me'),
   logout: () => request<{ message: string }>('/auth/logout', { method: 'POST' }),
   summary: () => request<DashboardSummary>('/dashboard/summary'),
+  assignments: () => request<Paginated<Assignment>>('/assignments'),
   subjects: () => request<{ data: SubjectRef[] }>('/subjects'),
   levels: () => request<{ data: LevelRef[] }>('/levels'),
   requests: () => request<Paginated<StudentRequest>>('/requests'),

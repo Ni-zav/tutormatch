@@ -335,7 +335,34 @@ class TutorMatchApiTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.0.id', $assignment->id)
             ->assertJsonPath('data.0.application_status', 'applied')
+            ->assertJsonPath('data.0.applications', [])
             ->assertJsonPath('data.0.request.subject', 'Chemistry');
+    }
+
+    public function test_coordinator_can_review_assignment_applications(): void
+    {
+        $token = $this->tokenForCoordinator();
+        [$studentRequest, $tutor] = $this->matchFixture();
+        $assignment = Assignment::create([
+            'student_request_id' => $studentRequest->id,
+            'title' => 'Sec 4 O-Level Chemistry in Bishan',
+            'status' => 'open',
+            'published_at' => now(),
+        ]);
+        $assignment->applications()->create([
+            'tutor_id' => $tutor->id,
+            'status' => 'applied',
+            'message' => 'Available for Saturday morning.',
+            'applied_at' => now(),
+        ]);
+
+        $this->withToken($token)
+            ->getJson('/api/assignments')
+            ->assertOk()
+            ->assertJsonPath('data.0.id', $assignment->id)
+            ->assertJsonPath('data.0.applications.0.tutor_id', $tutor->id)
+            ->assertJsonPath('data.0.applications.0.tutor_name', 'Daniel Lim')
+            ->assertJsonPath('data.0.applications.0.message', 'Available for Saturday morning.');
     }
 
     public function test_tutor_application_uses_authenticated_tutor_profile(): void

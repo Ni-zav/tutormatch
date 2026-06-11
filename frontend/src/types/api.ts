@@ -61,6 +61,36 @@ export type DashboardSummary = {
   matches: { generated: number; average_score: number };
 };
 
+export type AssignmentApplication = {
+  id: number;
+  tutor_id: number;
+  tutor_name: string | null;
+  status: string;
+  message: string | null;
+  applied_at: string;
+};
+
+export type Assignment = {
+  id: number;
+  title: string;
+  status: string;
+  published_at: string | null;
+  application_status: string | null;
+  application_id: number | null;
+  applications: AssignmentApplication[];
+  request: {
+    id: number;
+    subject: string | null;
+    level: string | null;
+    location: string;
+    teaching_mode: 'home' | 'online' | 'hybrid';
+    budget_min: number | null;
+    budget_max: number;
+    schedule: string;
+    notes: string | null;
+  } | null;
+};
+
 export type Paginated<T> = {
   data: T[];
   links?: unknown;

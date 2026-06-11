@@ -1,9 +1,9 @@
 import { type FormEvent, useEffect, useMemo, useState } from 'react';
 import { api, setAuthToken } from './api/client';
-import type { AuthUser, DashboardSummary, LevelRef, MatchResult, MessageDraft, StudentRequest, StudentRequestPayload, SubjectRef, Tutor } from './types/api';
+import type { Assignment, AuthUser, DashboardSummary, LevelRef, MatchResult, MessageDraft, StudentRequest, StudentRequestPayload, SubjectRef, Tutor } from './types/api';
 import './App.css';
 
-type View = 'dashboard' | 'requests' | 'new-request' | 'detail' | 'tutors' | 'drafts';
+type View = 'dashboard' | 'requests' | 'new-request' | 'detail' | 'applications' | 'tutors' | 'drafts';
 
 function App() {
   const [view, setView] = useState<View>('dashboard');
@@ -14,6 +14,7 @@ function App() {
   const [selectedRequestId, setSelectedRequestId] = useState<number | null>(null);
   const [selectedRequest, setSelectedRequest] = useState<StudentRequest | null>(null);
   const [matches, setMatches] = useState<MatchResult[]>([]);
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [tutors, setTutors] = useState<Tutor[]>([]);
   const [draft, setDraft] = useState<MessageDraft | null>(null);
   const [aiNote, setAiNote] = useState<string | null>(null);
@@ -70,6 +71,7 @@ function App() {
     setSelectedRequest(null);
     setSelectedRequestId(null);
     setMatches([]);
+    setAssignments([]);
     setTutors([]);
   }
 
@@ -77,10 +79,11 @@ function App() {
     setLoading('Loading TutorMatch Ops data');
     setError(null);
     try {
-      const [summaryResponse, requestResponse, tutorResponse] = await Promise.all([api.summary(), api.requests(), api.tutors()]);
+      const [summaryResponse, requestResponse, tutorResponse, assignmentResponse] = await Promise.all([api.summary(), api.requests(), api.tutors(), api.assignments()]);
       setSummary(summaryResponse);
       setRequests(requestResponse.data);
       setTutors(tutorResponse.data);
+      setAssignments(assignmentResponse.data);
       void loadReferenceData();
       if (requestResponse.data[0]) setSelectedRequestId(requestResponse.data[0].id);
     } catch (err) {
@@ -212,7 +215,7 @@ function App() {
           <h1>Coordinator Console</h1>
         </div>
         <nav>
-          {(['dashboard', 'requests', 'new-request', 'detail', 'tutors', 'drafts'] as View[]).map((item) => (
+          {(['dashboard', 'requests', 'new-request', 'detail', 'applications', 'tutors', 'drafts'] as View[]).map((item) => (
             <button key={item} className={view === item ? 'active' : ''} onClick={() => setView(item)}>
               {labelView(item)}
             </button>
@@ -255,6 +258,7 @@ function App() {
             onUpdateMatch={updateMatchWorkflow}
           />
         )}
+        {view === 'applications' && <Applications assignments={assignments} />}
         {view === 'tutors' && <Tutors tutors={tutors} />}
         {view === 'drafts' && <Drafts draft={draft} />}
       </section>
@@ -447,6 +451,36 @@ function RequestDetail({ request, matches, aiNote, onGenerate, onExplain, onDraf
   );
 }
 
+function Applications({ assignments }: { assignments: Assignment[] }) {
+  const assignmentsWithApplications = assignments.filter((assignment) => assignment.applications.length > 0);
+
+  if (!assignmentsWithApplications.length) return <EmptyState text="No tutor applications have been submitted yet." />;
+
+  return (
+    <div className="cards">
+      {assignmentsWithApplications.map((assignment) => (
+        <section className="panel" key={assignment.id}>
+          <div className="match-head">
+            <h3>{assignment.title}</h3>
+            <span>{assignment.applications.length} applied</span>
+          </div>
+          <p>{assignment.request?.level} {assignment.request?.subject} - {assignment.request?.location} - {assignment.request?.teaching_mode}</p>
+          {assignment.applications.map((application) => (
+            <article className="application" key={application.id}>
+              <div className="match-head">
+                <strong>{application.tutor_name ?? `Tutor #${application.tutor_id}`}</strong>
+                <span>{application.status}</span>
+              </div>
+              <p>{application.message ?? 'No message provided.'}</p>
+              <small>{application.applied_at ? new Date(application.applied_at).toLocaleString() : 'Application time unavailable'}</small>
+            </article>
+          ))}
+        </section>
+      ))}
+    </div>
+  );
+}
+
 function Tutors({ tutors }: { tutors: Tutor[] }) {
   if (!tutors.length) return <EmptyState text="No tutors loaded." />;
   return (
@@ -490,6 +524,7 @@ function labelView(view: View) {
     requests: 'Student Requests',
     'new-request': 'New Request',
     detail: 'Request Detail + Matches',
+    applications: 'Tutor Applications',
     tutors: 'Tutors',
     drafts: 'Message Drafts',
   }[view];

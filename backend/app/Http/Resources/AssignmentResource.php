@@ -19,6 +19,17 @@ class AssignmentResource extends JsonResource
             'published_at' => $this->published_at,
             'application_status' => $application?->status,
             'application_id' => $application?->id,
+            'applications' => $request->user()?->role === 'tutor' ? [] : $this->whenLoaded(
+                'applications',
+                fn () => $this->applications->map(fn ($application) => [
+                    'id' => $application->id,
+                    'tutor_id' => $application->tutor_id,
+                    'tutor_name' => $application->tutor?->name,
+                    'status' => $application->status,
+                    'message' => $application->message,
+                    'applied_at' => $application->applied_at,
+                ])->values()
+            ),
             'request' => $studentRequest ? [
                 'id' => $studentRequest->id,
                 'subject' => $studentRequest->subject?->name,
