@@ -25,6 +25,19 @@ class AuthenticateApiToken
             return response()->json(['message' => 'Unauthenticated.'], 401);
         }
 
+        $ttlMinutes = (int) config('auth.api_token_ttl_minutes', 1440);
+        if (
+            ! $user->api_token_issued_at
+            || ($ttlMinutes > 0 && $user->api_token_issued_at->copy()->addMinutes($ttlMinutes)->isPast())
+        ) {
+            $user->forceFill([
+                'api_token_hash' => null,
+                'api_token_issued_at' => null,
+            ])->save();
+
+            return response()->json(['message' => 'Token expired.'], 401);
+        }
+
         if ($roles !== [] && ! in_array($user->role, $roles, true)) {
             return response()->json(['message' => 'Forbidden.'], 403);
         }

@@ -67,6 +67,33 @@ class TutorMatchApiTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_expired_api_tokens_are_rejected_and_revoked(): void
+    {
+        config(['auth.api_token_ttl_minutes' => 60]);
+        $plainToken = 'expired-token';
+        $user = User::create([
+            'name' => 'Coordinator',
+            'email' => 'expired-token@example.test',
+            'password' => 'password',
+            'role' => 'coordinator',
+        ]);
+        $user->forceFill([
+            'api_token_hash' => hash('sha256', $plainToken),
+            'api_token_issued_at' => now()->subMinutes(61),
+        ])->save();
+
+        $this->withToken($plainToken)
+            ->getJson('/api/auth/me')
+            ->assertUnauthorized()
+            ->assertJsonPath('message', 'Token expired.');
+
+        $this->assertDatabaseHas('users', [
+            'id' => $user->id,
+            'api_token_hash' => null,
+            'api_token_issued_at' => null,
+        ]);
+    }
+
     public function test_coordinator_can_read_reference_data_for_request_form(): void
     {
         $token = $this->tokenForCoordinator();

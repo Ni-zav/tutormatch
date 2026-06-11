@@ -33,6 +33,7 @@ Required backend variables:
 - `APP_KEY`
 - `APP_URL`
 - `FRONTEND_ALLOWED_ORIGINS`
+- `API_TOKEN_TTL_MINUTES=1440` or a shorter value for stricter production sessions
 - `DB_CONNECTION=pgsql`
 - `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`
 - `QUEUE_CONNECTION=database`

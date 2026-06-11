@@ -114,4 +114,16 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+    /*
+    |--------------------------------------------------------------------------
+    | API Token Lifetime
+    |--------------------------------------------------------------------------
+    |
+    | The demo API uses hashed bearer tokens for SPA/mobile clients. Keep tokens
+    | finite-lived so a copied local token does not remain valid indefinitely.
+    |
+    */
+
+    'api_token_ttl_minutes' => env('API_TOKEN_TTL_MINUTES', 1440),
+
 ];
