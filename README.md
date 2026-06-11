@@ -185,6 +185,7 @@ The demo works with no AI key:
 
 ```env
 AI_PROVIDER=mock
+AI_TIMEOUT_SECONDS=20
 OPENAI_API_KEY=
 ```
 
@@ -196,4 +197,4 @@ OPENAI_API_KEY=your_key_here
 OPENAI_MODEL=gpt-4o-mini
 ```
 
-The API falls back to deterministic mock output if the provider is unavailable.
+The API falls back to deterministic mock output if the provider is unavailable and stores compact generation metadata on message drafts.

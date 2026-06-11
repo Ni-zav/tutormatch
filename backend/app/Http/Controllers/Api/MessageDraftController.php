@@ -26,6 +26,9 @@ class MessageDraftController extends Controller
             'channel' => $draft['channel'],
             'body' => $draft['body'],
             'generated_by' => $draft['generated_by'],
+            'prompt_version' => $draft['prompt_version'] ?? 'message-draft-v1',
+            'fallback_used' => $draft['fallback_used'] ?? false,
+            'generation_metadata' => $draft['generation_metadata'] ?? null,
         ]);
 
         return response()->json(['data' => $messageDraft], 201);

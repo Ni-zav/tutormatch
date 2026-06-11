@@ -39,8 +39,9 @@ Required backend variables:
 - `CACHE_STORE=database`
 - `SESSION_DRIVER=database`
 - `AI_PROVIDER=mock` unless a real provider is intentionally configured
+- `AI_TIMEOUT_SECONDS=20`
 
-For real AI, set `AI_PROVIDER=openai`, `OPENAI_API_KEY`, and `OPENAI_MODEL`. Do not make paid AI required for core matching.
+For real AI, set `AI_PROVIDER=openai`, `OPENAI_API_KEY`, `OPENAI_MODEL`, and `AI_TIMEOUT_SECONDS`. Do not make paid AI required for core matching.
 
 ## Release Steps
 

@@ -7,6 +7,7 @@ AI is behind the `AiAssistant` interface. The default implementation binds to `M
 - Explain a match using the deterministic score and breakdown.
 - Draft WhatsApp-style client or tutor messages.
 - Return `generated_by = mock_ai` for transparency.
+- Store message draft metadata: `prompt_version`, `fallback_used`, and compact `generation_metadata`.
 
 ## Safety
 
@@ -14,7 +15,9 @@ AI is behind the `AiAssistant` interface. The default implementation binds to `M
 - The demo uses fictional data.
 - Generated messages should be reviewed by a human coordinator.
 - Production prompts should instruct the model to use only provided facts, avoid guarantees, and return structured JSON.
+- The app stores provider/debug metadata, not full prompt payloads.
+- Real provider calls use `AI_TIMEOUT_SECONDS` and fall back to mock output on errors or invalid JSON.
 
 ## Production Next Steps
 
-Add a real provider implementation only when `OPENAI_API_KEY` or another provider key exists, add prompt versioning, log generation metadata, and redact sensitive data before sending prompts.
+Before real use, add stronger prompt redaction, audit logs for generation requests, and provider-specific monitoring.

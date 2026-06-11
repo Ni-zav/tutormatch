@@ -73,6 +73,9 @@ export type MessageDraft = {
   audience: string;
   channel: string;
   generated_by: string;
+  prompt_version: string;
+  fallback_used: boolean;
+  generation_metadata: Record<string, unknown> | null;
 };
 
 export type AuthUser = {

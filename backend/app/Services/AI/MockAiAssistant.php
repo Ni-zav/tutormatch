@@ -17,6 +17,8 @@ class MockAiAssistant implements AiAssistant
 
         return [
             'generated_by' => 'mock_ai',
+            'prompt_version' => 'match-explain-v1',
+            'fallback_used' => false,
             'summary' => $matchResult->deterministic_explanation,
             'strengths' => $strengths,
             'risks' => $risks,
@@ -35,9 +37,15 @@ class MockAiAssistant implements AiAssistant
 
         return [
             'generated_by' => 'mock_ai',
+            'prompt_version' => 'message-draft-v1',
+            'fallback_used' => false,
             'audience' => $audience,
             'channel' => $channel,
             'body' => $body,
+            'generation_metadata' => [
+                'provider' => 'mock',
+                'template' => 'deterministic_message_v1',
+            ],
         ];
     }
 }

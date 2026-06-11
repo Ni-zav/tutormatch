@@ -101,6 +101,10 @@ Use the returned `data.token` as `Authorization: Bearer <token>`.
 
 Allowed match statuses are `recommended`, `shortlisted`, `accepted`, `rejected`, `confirmed`, `needs_follow_up`, and `closed`. Allowed outreach statuses are `not_contacted`, `drafted`, `contacted`, `responded`, and `no_response`.
 
+## Message Draft Metadata
+
+Message draft responses include `generated_by`, `prompt_version`, `fallback_used`, and `generation_metadata`. `AI_PROVIDER=mock` works offline. If `AI_PROVIDER=openai` fails or returns invalid JSON, the API stores mock output with `fallback_used=true`.
+
 ## Tutor Assignment Feed
 
 `GET /assignments` returns open published assignments. For tutor users, each row includes that tutor's current `application_status` when they have already applied.

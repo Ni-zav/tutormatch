@@ -39,6 +39,7 @@ return [
         'provider' => env('AI_PROVIDER', 'mock'),
         'openai_api_key' => env('OPENAI_API_KEY'),
         'openai_model' => env('OPENAI_MODEL', 'gpt-4o-mini'),
+        'timeout_seconds' => (int) env('AI_TIMEOUT_SECONDS', 20),
     ],
 
 ];

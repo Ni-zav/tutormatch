@@ -14,5 +14,16 @@ class MessageDraft extends Model
         'channel',
         'body',
         'generated_by',
+        'prompt_version',
+        'fallback_used',
+        'generation_metadata',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'fallback_used' => 'boolean',
+            'generation_metadata' => 'array',
+        ];
+    }
 }

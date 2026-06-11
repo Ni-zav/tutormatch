@@ -10,6 +10,7 @@ use App\Models\Subject;
 use App\Models\Tutor;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class TutorMatchApiTest extends TestCase
@@ -136,7 +137,50 @@ class TutorMatchApiTest extends TestCase
             'channel' => 'whatsapp',
         ])
             ->assertCreated()
-            ->assertJsonPath('data.generated_by', 'mock_ai');
+            ->assertJsonPath('data.generated_by', 'mock_ai')
+            ->assertJsonPath('data.prompt_version', 'message-draft-v1')
+            ->assertJsonPath('data.fallback_used', false)
+            ->assertJsonPath('data.generation_metadata.provider', 'mock');
+    }
+
+    public function test_openai_message_draft_falls_back_to_mock_with_metadata(): void
+    {
+        config([
+            'services.ai.provider' => 'openai',
+            'services.ai.openai_api_key' => 'test-key',
+            'services.ai.openai_model' => 'test-model',
+            'services.ai.timeout_seconds' => 1,
+        ]);
+        Http::fake([
+            'api.openai.com/*' => Http::response(['error' => ['message' => 'unavailable']], 500),
+        ]);
+        $token = $this->tokenForCoordinator();
+        $subject = Subject::create(['name' => 'Chemistry']);
+        $level = Level::create(['name' => 'Sec 4 O-Level']);
+        $studentRequest = StudentRequest::create([
+            'student_name' => 'Demo Student A',
+            'parent_name' => 'Mrs Tan',
+            'subject_id' => $subject->id,
+            'level_id' => $level->id,
+            'location' => 'Bishan',
+            'teaching_mode' => 'home',
+            'budget_max' => 65,
+            'urgency' => 'urgent',
+            'schedule_notes' => 'Weekend mornings preferred',
+        ]);
+
+        $this->withToken($token)->postJson('/api/message-drafts', [
+            'student_request_id' => $studentRequest->id,
+            'audience' => 'client',
+            'channel' => 'whatsapp',
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.generated_by', 'mock_ai')
+            ->assertJsonPath('data.fallback_used', true)
+            ->assertJsonPath('data.generation_metadata.provider', 'openai')
+            ->assertJsonPath('data.generation_metadata.fallback_provider', 'mock');
+
+        Http::assertSentCount(1);
     }
 
     public function test_coordinator_can_update_match_workflow_status(): void
