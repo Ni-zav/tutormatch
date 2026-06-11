@@ -323,23 +323,45 @@ dd {
 .factors,
 .meta-line,
 .workflow-line,
-.match-actions {
+.match-actions,
+.audit-tools {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
 
 .actions button,
-.match-actions button {
+.match-actions button,
+.audit-tools button {
   padding: 10px 12px;
   background: #1f8a7a;
   color: #fff;
 }
 
 .actions button:disabled,
-.match-actions button:disabled {
+.match-actions button:disabled,
+.audit-tools button:disabled {
   background: #94a3b8;
   cursor: not-allowed;
+}
+
+.audit-tools {
+  align-items: end;
+  margin-bottom: 14px;
+}
+
+.audit-tools label {
+  display: grid;
+  gap: 6px;
+  color: #475569;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.audit-tools button {
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
 }
 
 .match {

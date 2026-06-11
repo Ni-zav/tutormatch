@@ -84,13 +84,45 @@ class TutorMatchApiTest extends TestCase
             'metadata' => ['status' => 'new'],
             'ip_address' => '127.0.0.1',
         ]);
+        AuditLog::create([
+            'user_id' => $user->id,
+            'action' => 'auth.login',
+            'auditable_type' => User::class,
+            'auditable_id' => $user->id,
+        ]);
 
         $this->withToken($token)
-            ->getJson('/api/audit-logs')
+            ->getJson('/api/audit-logs?action=request.created')
             ->assertOk()
             ->assertJsonPath('data.0.action', 'request.created')
             ->assertJsonPath('data.0.actor.email', 'audit-review@example.test')
+            ->assertJsonCount(1, 'data')
             ->assertJsonPath('data.0.metadata.status', 'new');
+    }
+
+    public function test_coordinator_can_export_audit_logs_as_csv(): void
+    {
+        $user = User::create([
+            'name' => 'Coordinator',
+            'email' => 'audit-export@example.test',
+            'password' => 'password',
+            'role' => 'coordinator',
+        ]);
+        $token = $this->tokenFor($user);
+        AuditLog::create([
+            'user_id' => $user->id,
+            'action' => 'request.created',
+            'auditable_type' => StudentRequest::class,
+            'auditable_id' => 123,
+            'ip_address' => '127.0.0.1',
+        ]);
+
+        $this->withToken($token)
+            ->get('/api/audit-logs?format=csv')
+            ->assertOk()
+            ->assertHeader('content-type', 'text/csv')
+            ->assertSee('request.created')
+            ->assertSee('audit-export@example.test');
     }
 
     public function test_tutor_cannot_review_audit_logs(): void

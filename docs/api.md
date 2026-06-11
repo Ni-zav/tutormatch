@@ -16,7 +16,7 @@ Most workflow routes require a bearer token from `POST /auth/login`. Tokens are 
 | POST | `/auth/login` | Issue bearer token for a valid demo user |
 | GET | `/auth/me` | Current authenticated user |
 | POST | `/auth/logout` | Revoke the current bearer token |
-| GET | `/audit-logs` | Coordinator/admin recent audit event review |
+| GET | `/audit-logs` | Coordinator/admin recent audit event review; supports `action` filter and `format=csv` export |
 | GET | `/tutor/profile` | Tutor self-service profile and availability detail |
 | PATCH | `/tutor/profile` | Tutor self-service profile and availability update |
 | GET | `/dashboard/summary` | Coordinator/admin metrics |
@@ -134,3 +134,5 @@ Tutor users can update `teaching_mode`, `location`, hourly rate range, `bio`, ac
 ## Audit Logging
 
 The API writes internal audit rows for login/logout, request creation, match generation, match workflow updates, message draft creation, tutor applications, application status updates, and withdrawals. Coordinator/admin users can review recent events through `GET /audit-logs`; tutor users cannot access audit logs.
+
+Audit review supports `GET /audit-logs?action=request.created` for action filtering and `GET /audit-logs?format=csv` for a CSV export capped at 500 recent rows.

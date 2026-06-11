@@ -1,5 +1,5 @@
 import { type FormEvent, useEffect, useMemo, useState } from 'react';
-import { api, setAuthToken } from './api/client';
+import { api, getAuthToken, setAuthToken } from './api/client';
 import type { Assignment, AuditLog, AuthUser, DashboardSummary, LevelRef, MatchResult, MessageDraft, StudentRequest, StudentRequestPayload, SubjectRef, Tutor } from './types/api';
 import './App.css';
 
@@ -16,6 +16,7 @@ function App() {
   const [matches, setMatches] = useState<MatchResult[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+  const [auditAction, setAuditAction] = useState('');
   const [tutors, setTutors] = useState<Tutor[]>([]);
   const [draft, setDraft] = useState<MessageDraft | null>(null);
   const [aiNote, setAiNote] = useState<string | null>(null);
@@ -74,6 +75,7 @@ function App() {
     setMatches([]);
     setAssignments([]);
     setAuditLogs([]);
+    setAuditAction('');
     setTutors([]);
   }
 
@@ -219,6 +221,47 @@ function App() {
     }
   }
 
+  async function loadAuditLogs(action = auditAction) {
+    setLoading('Loading audit trail');
+    setError(null);
+    try {
+      const response = await api.auditLogs(action || undefined);
+      setAuditLogs(response.data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to load audit trail.');
+    } finally {
+      setLoading('');
+    }
+  }
+
+  async function exportAuditLogs() {
+    setLoading('Exporting audit trail');
+    setError(null);
+    try {
+      const token = getAuthToken();
+      const query = new URLSearchParams({ format: 'csv' });
+      if (auditAction) query.set('action', auditAction);
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000/api'}/audit-logs?${query.toString()}`, {
+        headers: {
+          Accept: 'text/csv',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+      if (!response.ok) throw new Error(`Export failed with ${response.status}`);
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'tutormatch-audit-log.csv';
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to export audit trail.');
+    } finally {
+      setLoading('');
+    }
+  }
+
   const topMatch = matches[0];
   const requestOptions = useMemo(() => requests.map((item) => ({ id: item.id, label: `${item.student_name} - ${item.subject?.name ?? 'Subject'}` })), [requests]);
 
@@ -278,7 +321,7 @@ function App() {
           />
         )}
         {view === 'applications' && <Applications assignments={assignments} onUpdateApplication={updateApplicationStatus} />}
-        {view === 'audit' && <AuditTrail auditLogs={auditLogs} />}
+        {view === 'audit' && <AuditTrail auditLogs={auditLogs} action={auditAction} onActionChange={setAuditAction} onApplyFilter={() => loadAuditLogs()} onExport={exportAuditLogs} />}
         {view === 'tutors' && <Tutors tutors={tutors} />}
         {view === 'drafts' && <Drafts draft={draft} />}
       </section>
@@ -508,23 +551,38 @@ function Applications({ assignments, onUpdateApplication }: {
   );
 }
 
-function AuditTrail({ auditLogs }: { auditLogs: AuditLog[] }) {
-  if (!auditLogs.length) return <EmptyState text="No audit events recorded yet." />;
-
+function AuditTrail({ auditLogs, action, onActionChange, onApplyFilter, onExport }: {
+  auditLogs: AuditLog[];
+  action: string;
+  onActionChange: (action: string) => void;
+  onApplyFilter: () => void;
+  onExport: () => void;
+}) {
   return (
-    <div className="table-list">
-      {auditLogs.map((entry) => (
-        <article className="row audit-row" key={entry.id}>
-          <span>
-            <strong>{entry.action}</strong>
-            <small>{entry.actor ? `${entry.actor.name} - ${entry.actor.role}` : 'System event'}</small>
-          </span>
-          <span>{entry.auditable_type ? shortType(entry.auditable_type) : 'n/a'} #{entry.auditable_id ?? '-'}</span>
-          <span>{entry.ip_address ?? 'No IP'}</span>
-          <span>{new Date(entry.created_at).toLocaleString()}</span>
-        </article>
-      ))}
-    </div>
+    <section className="panel">
+      <div className="audit-tools">
+        <label>
+          Action
+          <input value={action} onChange={(event) => onActionChange(event.target.value)} placeholder="request.created" />
+        </label>
+        <button onClick={onApplyFilter}>Apply</button>
+        <button onClick={onExport}>Export CSV</button>
+      </div>
+      {!auditLogs.length && <EmptyState text="No audit events recorded yet." />}
+      <div className="table-list">
+        {auditLogs.map((entry) => (
+          <article className="row audit-row" key={entry.id}>
+            <span>
+              <strong>{entry.action}</strong>
+              <small>{entry.actor ? `${entry.actor.name} - ${entry.actor.role}` : 'System event'}</small>
+            </span>
+            <span>{entry.auditable_type ? shortType(entry.auditable_type) : 'n/a'} #{entry.auditable_id ?? '-'}</span>
+            <span>{entry.ip_address ?? 'No IP'}</span>
+            <span>{new Date(entry.created_at).toLocaleString()}</span>
+          </article>
+        ))}
+      </div>
+    </section>
   );
 }
 

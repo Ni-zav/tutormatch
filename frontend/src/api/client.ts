@@ -12,6 +12,10 @@ export function setAuthToken(token: string | null) {
   }
 }
 
+export function getAuthToken() {
+  return authToken;
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const headers = new Headers(init?.headers);
   headers.set('Accept', 'application/json');
@@ -36,7 +40,7 @@ export const api = {
   me: () => request<{ data: AuthUser }>('/auth/me'),
   logout: () => request<{ message: string }>('/auth/logout', { method: 'POST' }),
   summary: () => request<DashboardSummary>('/dashboard/summary'),
-  auditLogs: () => request<Paginated<AuditLog>>('/audit-logs'),
+  auditLogs: (action?: string) => request<Paginated<AuditLog>>(`/audit-logs${action ? `?action=${encodeURIComponent(action)}` : ''}`),
   assignments: () => request<Paginated<Assignment>>('/assignments'),
   subjects: () => request<{ data: SubjectRef[] }>('/subjects'),
   levels: () => request<{ data: LevelRef[] }>('/levels'),
