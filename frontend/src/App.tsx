@@ -1,9 +1,9 @@
 import { type FormEvent, useEffect, useMemo, useState } from 'react';
 import { api, setAuthToken } from './api/client';
-import type { Assignment, AuthUser, DashboardSummary, LevelRef, MatchResult, MessageDraft, StudentRequest, StudentRequestPayload, SubjectRef, Tutor } from './types/api';
+import type { Assignment, AuditLog, AuthUser, DashboardSummary, LevelRef, MatchResult, MessageDraft, StudentRequest, StudentRequestPayload, SubjectRef, Tutor } from './types/api';
 import './App.css';
 
-type View = 'dashboard' | 'requests' | 'new-request' | 'detail' | 'applications' | 'tutors' | 'drafts';
+type View = 'dashboard' | 'requests' | 'new-request' | 'detail' | 'applications' | 'audit' | 'tutors' | 'drafts';
 
 function App() {
   const [view, setView] = useState<View>('dashboard');
@@ -15,6 +15,7 @@ function App() {
   const [selectedRequest, setSelectedRequest] = useState<StudentRequest | null>(null);
   const [matches, setMatches] = useState<MatchResult[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [tutors, setTutors] = useState<Tutor[]>([]);
   const [draft, setDraft] = useState<MessageDraft | null>(null);
   const [aiNote, setAiNote] = useState<string | null>(null);
@@ -72,6 +73,7 @@ function App() {
     setSelectedRequestId(null);
     setMatches([]);
     setAssignments([]);
+    setAuditLogs([]);
     setTutors([]);
   }
 
@@ -79,11 +81,12 @@ function App() {
     setLoading('Loading TutorMatch Ops data');
     setError(null);
     try {
-      const [summaryResponse, requestResponse, tutorResponse, assignmentResponse] = await Promise.all([api.summary(), api.requests(), api.tutors(), api.assignments()]);
+      const [summaryResponse, requestResponse, tutorResponse, assignmentResponse, auditResponse] = await Promise.all([api.summary(), api.requests(), api.tutors(), api.assignments(), api.auditLogs()]);
       setSummary(summaryResponse);
       setRequests(requestResponse.data);
       setTutors(tutorResponse.data);
       setAssignments(assignmentResponse.data);
+      setAuditLogs(auditResponse.data);
       void loadReferenceData();
       if (requestResponse.data[0]) setSelectedRequestId(requestResponse.data[0].id);
     } catch (err) {
@@ -231,7 +234,7 @@ function App() {
           <h1>Coordinator Console</h1>
         </div>
         <nav>
-          {(['dashboard', 'requests', 'new-request', 'detail', 'applications', 'tutors', 'drafts'] as View[]).map((item) => (
+          {(['dashboard', 'requests', 'new-request', 'detail', 'applications', 'audit', 'tutors', 'drafts'] as View[]).map((item) => (
             <button key={item} className={view === item ? 'active' : ''} onClick={() => setView(item)}>
               {labelView(item)}
             </button>
@@ -275,6 +278,7 @@ function App() {
           />
         )}
         {view === 'applications' && <Applications assignments={assignments} onUpdateApplication={updateApplicationStatus} />}
+        {view === 'audit' && <AuditTrail auditLogs={auditLogs} />}
         {view === 'tutors' && <Tutors tutors={tutors} />}
         {view === 'drafts' && <Drafts draft={draft} />}
       </section>
@@ -504,6 +508,26 @@ function Applications({ assignments, onUpdateApplication }: {
   );
 }
 
+function AuditTrail({ auditLogs }: { auditLogs: AuditLog[] }) {
+  if (!auditLogs.length) return <EmptyState text="No audit events recorded yet." />;
+
+  return (
+    <div className="table-list">
+      {auditLogs.map((entry) => (
+        <article className="row audit-row" key={entry.id}>
+          <span>
+            <strong>{entry.action}</strong>
+            <small>{entry.actor ? `${entry.actor.name} - ${entry.actor.role}` : 'System event'}</small>
+          </span>
+          <span>{entry.auditable_type ? shortType(entry.auditable_type) : 'n/a'} #{entry.auditable_id ?? '-'}</span>
+          <span>{entry.ip_address ?? 'No IP'}</span>
+          <span>{new Date(entry.created_at).toLocaleString()}</span>
+        </article>
+      ))}
+    </div>
+  );
+}
+
 function Tutors({ tutors }: { tutors: Tutor[] }) {
   if (!tutors.length) return <EmptyState text="No tutors loaded." />;
   return (
@@ -548,9 +572,14 @@ function labelView(view: View) {
     'new-request': 'New Request',
     detail: 'Request Detail + Matches',
     applications: 'Tutor Applications',
+    audit: 'Audit Trail',
     tutors: 'Tutors',
     drafts: 'Message Drafts',
   }[view];
+}
+
+function shortType(value: string) {
+  return value.split('\\').pop() ?? value;
 }
 
 export default App;

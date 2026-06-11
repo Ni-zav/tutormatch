@@ -285,6 +285,10 @@ small {
   border-color: #5eb6ad;
 }
 
+.audit-row {
+  cursor: default;
+}
+
 .row span:first-child {
   display: grid;
   gap: 4px;

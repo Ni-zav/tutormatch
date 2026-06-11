@@ -61,6 +61,22 @@ export type DashboardSummary = {
   matches: { generated: number; average_score: number };
 };
 
+export type AuditLog = {
+  id: number;
+  action: string;
+  actor: {
+    id: number;
+    name: string;
+    email: string;
+    role: string;
+  } | null;
+  auditable_type: string | null;
+  auditable_id: number | null;
+  metadata: Record<string, unknown> | null;
+  ip_address: string | null;
+  created_at: string;
+};
+
 export type AssignmentApplication = {
   id: number;
   tutor_id: number;

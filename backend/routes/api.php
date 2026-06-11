@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AssignmentApplicationController;
 use App\Http\Controllers\Api\AssignmentController;
+use App\Http\Controllers\Api\AuditLogController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\HealthController;
@@ -31,6 +32,7 @@ Route::middleware('api.token:tutor')->group(function (): void {
 });
 
 Route::middleware('api.token:admin,coordinator')->group(function (): void {
+    Route::get('/audit-logs', [AuditLogController::class, 'index']);
     Route::get('/dashboard/summary', [DashboardController::class, 'summary']);
     Route::get('/subjects', [ReferenceDataController::class, 'subjects']);
     Route::get('/levels', [ReferenceDataController::class, 'levels']);

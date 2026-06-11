@@ -67,6 +67,46 @@ class TutorMatchApiTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_coordinator_can_review_audit_logs(): void
+    {
+        $user = User::create([
+            'name' => 'Coordinator',
+            'email' => 'audit-review@example.test',
+            'password' => 'password',
+            'role' => 'coordinator',
+        ]);
+        $token = $this->tokenFor($user);
+        AuditLog::create([
+            'user_id' => $user->id,
+            'action' => 'request.created',
+            'auditable_type' => StudentRequest::class,
+            'auditable_id' => 123,
+            'metadata' => ['status' => 'new'],
+            'ip_address' => '127.0.0.1',
+        ]);
+
+        $this->withToken($token)
+            ->getJson('/api/audit-logs')
+            ->assertOk()
+            ->assertJsonPath('data.0.action', 'request.created')
+            ->assertJsonPath('data.0.actor.email', 'audit-review@example.test')
+            ->assertJsonPath('data.0.metadata.status', 'new');
+    }
+
+    public function test_tutor_cannot_review_audit_logs(): void
+    {
+        $token = $this->tokenFor(User::create([
+            'name' => 'Tutor',
+            'email' => 'audit-tutor@example.test',
+            'password' => 'password',
+            'role' => 'tutor',
+        ]));
+
+        $this->withToken($token)
+            ->getJson('/api/audit-logs')
+            ->assertForbidden();
+    }
+
     public function test_expired_api_tokens_are_rejected_and_revoked(): void
     {
         config(['auth.api_token_ttl_minutes' => 60]);

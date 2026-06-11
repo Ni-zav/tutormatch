@@ -110,6 +110,7 @@ Current local verification:
 - Factor breakdown: subject, level, location/mode, budget, availability, tutor type, history
 - Coordinator workflow actions for shortlist, contacted, follow-up, confirmed, and rejected match states
 - Structured audit logs for auth, request creation, match generation, workflow updates, message drafts, and tutor applications
+- Coordinator/admin audit trail review for recent operational events
 - Coordinator application review view with accept/reject actions that can finalize an assignment
 - AI/mock match explanation
 - WhatsApp-style message draft endpoint and UI
@@ -123,6 +124,7 @@ Current local verification:
 - `POST /api/auth/login`
 - `GET /api/auth/me`
 - `POST /api/auth/logout`
+- `GET /api/audit-logs`
 - `GET /api/tutor/profile`
 - `PATCH /api/tutor/profile`
 - `GET /api/dashboard/summary`
