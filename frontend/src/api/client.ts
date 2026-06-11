@@ -1,15 +1,26 @@
-import type { DashboardSummary, MatchResult, MessageDraft, Paginated, StudentRequest, Tutor } from '../types/api';
+import type { AuthUser, DashboardSummary, LoginResponse, MatchResult, MessageDraft, Paginated, StudentRequest, Tutor } from '../types/api';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000/api';
+let authToken = localStorage.getItem('tutormatch_api_token');
+
+export function setAuthToken(token: string | null) {
+  authToken = token;
+  if (token) {
+    localStorage.setItem('tutormatch_api_token', token);
+  } else {
+    localStorage.removeItem('tutormatch_api_token');
+  }
+}
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const headers = new Headers(init?.headers);
+  headers.set('Accept', 'application/json');
+  headers.set('Content-Type', 'application/json');
+  if (authToken) headers.set('Authorization', `Bearer ${authToken}`);
+
   const response = await fetch(`${API_BASE}${path}`, {
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      ...init?.headers,
-    },
     ...init,
+    headers,
   });
 
   if (!response.ok) {
@@ -21,6 +32,9 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  login: (payload: { email: string; password: string }) => request<LoginResponse>('/auth/login', { method: 'POST', body: JSON.stringify(payload) }),
+  me: () => request<{ data: AuthUser }>('/auth/me'),
+  logout: () => request<{ message: string }>('/auth/logout', { method: 'POST' }),
   summary: () => request<DashboardSummary>('/dashboard/summary'),
   requests: () => request<Paginated<StudentRequest>>('/requests'),
   request: (id: number) => request<{ data: StudentRequest }>(`/requests/${id}`),

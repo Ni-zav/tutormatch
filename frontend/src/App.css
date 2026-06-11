@@ -6,6 +6,53 @@
   color: #172033;
 }
 
+.login-shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: #eef3f8;
+  color: #172033;
+}
+
+.login-panel {
+  width: min(420px, 100%);
+  display: grid;
+  gap: 18px;
+  padding: 28px;
+  background: #fff;
+  border: 1px solid #dbe3ef;
+  border-radius: 8px;
+  box-shadow: 0 16px 36px rgba(23, 32, 51, 0.1);
+}
+
+.login-panel h1 {
+  margin: 0;
+}
+
+.login-panel form {
+  display: grid;
+  gap: 14px;
+}
+
+.login-panel label {
+  display: grid;
+  gap: 6px;
+  color: #475569;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.login-panel input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 11px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font: inherit;
+  color: #172033;
+}
+
 .sidebar {
   background: #172033;
   color: #fff;
@@ -42,6 +89,8 @@ select {
 
 nav button,
 .actions button,
+.session-tools button,
+.login-panel button,
 .row {
   border: 0;
   border-radius: 8px;
@@ -81,6 +130,31 @@ select {
   border: 1px solid #cbd5e1;
   border-radius: 8px;
   background: #fff;
+}
+
+.session-tools {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+}
+
+.session-tools span {
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.session-tools button,
+.login-panel button {
+  padding: 10px 12px;
+  background: #172033;
+  color: #fff;
+}
+
+.login-panel button:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
 }
 
 .grid,
@@ -262,5 +336,9 @@ dd {
   select {
     min-width: 0;
     width: 100%;
+  }
+
+  .session-tools {
+    justify-content: stretch;
   }
 }

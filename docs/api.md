@@ -2,22 +2,42 @@
 
 Base path: `/api`
 
+Most workflow routes require a bearer token from `POST /auth/login`. The local seed data creates fictional demo users:
+
+- `coordinator@tutormatch.test` / `password`
+- `admin@tutormatch.test` / `password`
+- `tutor@tutormatch.test` / `password`
+
 ## Routes
 
 | Method | Route | Purpose |
 |---|---|---|
 | GET | `/health` | API health check |
-| GET | `/dashboard/summary` | Coordinator metrics |
-| GET | `/requests` | Paginated student requests |
-| POST | `/requests` | Create student request and assignment |
-| GET | `/requests/{id}` | Request detail |
-| GET | `/requests/{id}/matches` | Paginated match results |
-| POST | `/requests/{id}/generate-matches` | Generate deterministic matches |
-| GET | `/tutors` | Paginated tutors |
-| GET | `/tutors/{id}` | Tutor profile |
-| POST | `/assignments/{id}/applications` | Tutor application mock |
-| POST | `/matches/{id}/explain` | AI/mock match explanation |
-| POST | `/message-drafts` | AI/mock message draft |
+| POST | `/auth/login` | Issue bearer token for a valid demo user |
+| GET | `/auth/me` | Current authenticated user |
+| POST | `/auth/logout` | Revoke the current bearer token |
+| GET | `/dashboard/summary` | Coordinator/admin metrics |
+| GET | `/requests` | Coordinator/admin paginated student requests |
+| POST | `/requests` | Coordinator/admin create student request and assignment |
+| GET | `/requests/{id}` | Coordinator/admin request detail |
+| GET | `/requests/{id}/matches` | Coordinator/admin paginated match results |
+| POST | `/requests/{id}/generate-matches` | Coordinator/admin generate deterministic matches |
+| GET | `/tutors` | Coordinator/admin paginated tutors |
+| GET | `/tutors/{id}` | Coordinator/admin tutor profile |
+| POST | `/assignments/{id}/applications` | Admin/coordinator/tutor application submission |
+| POST | `/matches/{id}/explain` | Coordinator/admin AI/mock match explanation |
+| POST | `/message-drafts` | Coordinator/admin AI/mock message draft |
+
+## Login Example
+
+```json
+{
+  "email": "coordinator@tutormatch.test",
+  "password": "password"
+}
+```
+
+Use the returned `data.token` as `Authorization: Bearer <token>`.
 
 ## Create Request Example
 

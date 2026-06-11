@@ -7,6 +7,7 @@ React + TypeScript Dashboard
         v
 Laravel API
   - Controllers and form requests
+  - Role-aware bearer-token middleware
   - API resources
   - TutorMatchingService
   - AiAssistant abstraction with mock fallback
@@ -33,4 +34,4 @@ Expo Tutor Mini App
 
 ## Production Tradeoffs
 
-Auth is intentionally omitted in the proof-of-concept to keep the demo focused on matching workflow. In production, the API should add role-based access for coordinators, tutors, and admins, plus audit logs for generated drafts and shortlist decisions.
+The current auth layer is a small MVP foundation: seeded users have admin, coordinator, or tutor roles, login issues a hashed bearer token, and workflow routes are role-protected. Before real users, replace this with Sanctum or another expiring token/session flow, add token rotation and audit logs, and keep coordinator-only actions separate from tutor-facing endpoints.

@@ -39,6 +39,14 @@ php artisan serve
 
 The API runs at `http://127.0.0.1:8000/api`.
 
+Seeded demo users:
+
+- Coordinator: `coordinator@tutormatch.test` / `password`
+- Admin: `admin@tutormatch.test` / `password`
+- Tutor: `tutor@tutormatch.test` / `password`
+
+These credentials are fictional local demo data only.
+
 ### Frontend
 
 ```bash
@@ -104,6 +112,9 @@ Current local verification:
 ## API Highlights
 
 - `GET /api/health`
+- `POST /api/auth/login`
+- `GET /api/auth/me`
+- `POST /api/auth/logout`
 - `GET /api/dashboard/summary`
 - `GET /api/requests`
 - `POST /api/requests`
@@ -148,7 +159,7 @@ More detail is in:
 
 ## Production Next Steps
 
-- Add role-based auth for coordinators, tutors, and admins.
+- Replace the demo bearer-token login with Sanctum or another expiring token/session flow before real users.
 - Add audit logs for matching decisions and generated messages.
 - Add queue-based match generation for high-volume workloads.
 - Add privacy controls and prompt redaction before real AI provider use.

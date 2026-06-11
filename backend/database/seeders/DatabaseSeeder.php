@@ -7,7 +7,9 @@ use App\Models\Level;
 use App\Models\StudentRequest;
 use App\Models\Subject;
 use App\Models\Tutor;
+use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -19,6 +21,31 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        User::updateOrCreate(
+            ['email' => 'coordinator@tutormatch.test'],
+            [
+                'name' => 'Demo Coordinator',
+                'password' => Hash::make('password'),
+                'role' => 'coordinator',
+            ]
+        );
+        User::updateOrCreate(
+            ['email' => 'admin@tutormatch.test'],
+            [
+                'name' => 'Demo Admin',
+                'password' => Hash::make('password'),
+                'role' => 'admin',
+            ]
+        );
+        User::updateOrCreate(
+            ['email' => 'tutor@tutormatch.test'],
+            [
+                'name' => 'Demo Tutor',
+                'password' => Hash::make('password'),
+                'role' => 'tutor',
+            ]
+        );
+
         $subjects = collect(['Mathematics', 'English', 'Chemistry', 'Physics', 'Biology', 'GP', 'Chinese'])
             ->mapWithKeys(fn ($name) => [$name => Subject::firstOrCreate(['name' => $name])]);
 

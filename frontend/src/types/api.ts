@@ -69,3 +69,17 @@ export type MessageDraft = {
   channel: string;
   generated_by: string;
 };
+
+export type AuthUser = {
+  id: number;
+  name: string;
+  email: string;
+  role: 'admin' | 'coordinator' | 'tutor';
+};
+
+export type LoginResponse = {
+  data: {
+    token: string;
+    user: AuthUser;
+  };
+};

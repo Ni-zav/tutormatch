@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { api } from './api/client';
-import type { DashboardSummary, MatchResult, MessageDraft, StudentRequest, Tutor } from './types/api';
+import { api, setAuthToken } from './api/client';
+import type { AuthUser, DashboardSummary, MatchResult, MessageDraft, StudentRequest, Tutor } from './types/api';
 import './App.css';
 
 type View = 'dashboard' | 'requests' | 'detail' | 'tutors' | 'drafts';
@@ -15,16 +15,61 @@ function App() {
   const [tutors, setTutors] = useState<Tutor[]>([]);
   const [draft, setDraft] = useState<MessageDraft | null>(null);
   const [aiNote, setAiNote] = useState<string | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState('Loading workspace');
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    void loadInitialData();
+    void restoreSession();
   }, []);
 
   useEffect(() => {
     if (selectedRequestId) void loadRequestDetail(selectedRequestId);
   }, [selectedRequestId]);
+
+  async function restoreSession() {
+    setLoading('Checking session');
+    setError(null);
+    try {
+      const response = await api.me();
+      setUser(response.data);
+      await loadInitialData();
+    } catch {
+      setAuthToken(null);
+      setUser(null);
+      setLoading('');
+    }
+  }
+
+  async function login(email: string, password: string) {
+    setLoading('Signing in');
+    setError(null);
+    try {
+      const response = await api.login({ email, password });
+      setAuthToken(response.data.token);
+      setUser(response.data.user);
+      await loadInitialData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to sign in.');
+      setLoading('');
+    }
+  }
+
+  async function logout() {
+    try {
+      await api.logout();
+    } catch {
+      // Token cleanup is still correct if the server session already expired.
+    }
+    setAuthToken(null);
+    setUser(null);
+    setSummary(null);
+    setRequests([]);
+    setSelectedRequest(null);
+    setSelectedRequestId(null);
+    setMatches([]);
+    setTutors([]);
+  }
 
   async function loadInitialData() {
     setLoading('Loading TutorMatch Ops data');
@@ -105,6 +150,10 @@ function App() {
   const topMatch = matches[0];
   const requestOptions = useMemo(() => requests.map((item) => ({ id: item.id, label: `${item.student_name} - ${item.subject?.name ?? 'Subject'}` })), [requests]);
 
+  if (!user) {
+    return <LoginScreen loading={loading} error={error} onLogin={login} />;
+  }
+
   return (
     <main className="app-shell">
       <aside className="sidebar">
@@ -127,11 +176,15 @@ function App() {
             <p className="eyebrow">MindFlex-style assignment operations</p>
             <h2>{labelView(view)}</h2>
           </div>
-          <select value={selectedRequestId ?? ''} onChange={(event) => setSelectedRequestId(Number(event.target.value))}>
-            {requestOptions.map((option) => (
-              <option key={option.id} value={option.id}>{option.label}</option>
-            ))}
-          </select>
+          <div className="session-tools">
+            <span>{user.name} - {user.role}</span>
+            <select value={selectedRequestId ?? ''} onChange={(event) => setSelectedRequestId(Number(event.target.value))}>
+              {requestOptions.map((option) => (
+                <option key={option.id} value={option.id}>{option.label}</option>
+              ))}
+            </select>
+            <button onClick={logout}>Log out</button>
+          </div>
         </header>
 
         {loading && <div className="notice">{loading}</div>}
@@ -152,6 +205,32 @@ function App() {
         )}
         {view === 'tutors' && <Tutors tutors={tutors} />}
         {view === 'drafts' && <Drafts draft={draft} />}
+      </section>
+    </main>
+  );
+}
+
+function LoginScreen({ loading, error, onLogin }: { loading: string; error: string | null; onLogin: (email: string, password: string) => void }) {
+  const [email, setEmail] = useState('coordinator@tutormatch.test');
+  const [password, setPassword] = useState('password');
+
+  return (
+    <main className="login-shell">
+      <section className="login-panel">
+        <p className="eyebrow">TutorMatch Ops</p>
+        <h1>Coordinator Console</h1>
+        <form onSubmit={(event) => { event.preventDefault(); onLogin(email, password); }}>
+          <label>
+            Email
+            <input value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" />
+          </label>
+          <label>
+            Password
+            <input value={password} onChange={(event) => setPassword(event.target.value)} type="password" autoComplete="current-password" />
+          </label>
+          <button type="submit" disabled={Boolean(loading)}>{loading || 'Log in'}</button>
+        </form>
+        {error && <div className="notice error">{error}</div>}
       </section>
     </main>
   );
