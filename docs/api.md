@@ -37,6 +37,22 @@ Most workflow routes require a bearer token from `POST /auth/login`. Tokens are 
 | PATCH | `/matches/{id}/workflow` | Coordinator/admin shortlist, outreach, and outcome status update |
 | POST | `/message-drafts` | Coordinator/admin AI/mock message draft |
 
+## Health Response
+
+`GET /health` is public and safe for uptime checks. It returns `200` when the API and database are reachable:
+
+```json
+{
+  "status": "ok",
+  "service": "TutorMatch Ops API",
+  "checks": {
+    "database": "ok"
+  }
+}
+```
+
+If the database check fails, the endpoint returns `503` with `status = degraded` and `checks.database = error`.
+
 ## Login Example
 
 ```json

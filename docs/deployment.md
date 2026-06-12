@@ -9,7 +9,7 @@ TutorMatch is intended to stay cheap and boring at MVP scale: static frontend, L
 - Database: PostgreSQL on the same VPS at first.
 - Queue: Laravel database queue worker.
 - HTTPS/reverse proxy: Caddy.
-- CI: GitHub Actions running backend tests and frontend build.
+- CI: GitHub Actions running backend tests, frontend lint/build, and mobile type checks.
 
 ## Local Prod-Like Compose
 
@@ -22,7 +22,7 @@ docker compose -f docker-compose.prod.example.yml run --rm backend php artisan m
 docker compose -f docker-compose.prod.example.yml up -d
 ```
 
-Use `GET /api/health` for uptime checks. Laravel's built-in `/up` route is also exposed through the example Caddy config.
+Use `GET /api/health` for uptime checks. It returns `200` only when Laravel can reach the database, and returns `503` with a minimal degraded payload if the database check fails. Laravel's built-in `/up` route is also exposed through the example Caddy config.
 
 ## Production Environment
 
