@@ -87,6 +87,8 @@ Use the returned `data.token` as `Authorization: Bearer <token>`.
 
 ## Match Response Shape
 
+Generating matches sets the request status to `matching` when candidates are found, or `no_matches` when the database prefilter returns no eligible tutors.
+
 ```json
 {
   "data": [

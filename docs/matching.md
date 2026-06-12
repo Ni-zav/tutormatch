@@ -20,6 +20,8 @@ Match generation first builds a database candidate set, then runs deterministic 
 
 Existing match rows for tutors that no longer pass the prefilter are removed during regeneration so repeated runs stay aligned with current tutor data. Final ordering is deterministic: total score, tutor success score, acceptance rate, then tutor id.
 
+When no tutors pass the prefilter, generation returns an empty match list and marks the student request as `no_matches` so coordinators can distinguish "searched but no candidate found" from "not generated yet."
+
 ## Limitations
 
 The current model uses simple exact matches and demo success signals. In production, weights should be tuned using placement outcomes, tutor response time, parent feedback, student retention, rejection reasons, and coordinator overrides.

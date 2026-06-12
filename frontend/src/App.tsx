@@ -128,6 +128,9 @@ function App() {
     try {
       const response = await api.generateMatches(selectedRequestId);
       setMatches(response.data);
+      const requestResponse = await api.request(selectedRequestId);
+      setSelectedRequest(requestResponse.data);
+      setRequests((current) => current.map((item) => (item.id === selectedRequestId ? requestResponse.data : item)));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to generate matches.');
     } finally {
@@ -485,7 +488,9 @@ function RequestDetail({ request, matches, aiNote, onGenerate, onExplain, onDraf
       </section>
       <section className="panel">
         <h3>Top Matches</h3>
-        {!matches.length && <EmptyState text="No matches generated yet." />}
+        {!matches.length && (
+          <EmptyState text={request.status === 'no_matches' ? 'No eligible tutors passed the current prefilter.' : 'No matches generated yet.'} />
+        )}
         {matches.map((match) => (
           <article className="match" key={match.id}>
             <div className="match-head"><strong>{match.tutor.name}</strong><span>{match.total_score}/100</span></div>

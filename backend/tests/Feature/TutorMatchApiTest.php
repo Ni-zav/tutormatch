@@ -397,6 +397,39 @@ class TutorMatchApiTest extends TestCase
         ]);
     }
 
+    public function test_match_generation_marks_request_when_no_candidates_are_available(): void
+    {
+        $token = $this->tokenForCoordinator();
+        $subject = Subject::create(['name' => 'Chemistry']);
+        $level = Level::create(['name' => 'Sec 4 O-Level']);
+        $studentRequest = StudentRequest::create([
+            'student_name' => 'Demo Student A',
+            'parent_name' => 'Mrs Tan',
+            'subject_id' => $subject->id,
+            'level_id' => $level->id,
+            'location' => 'Bishan',
+            'teaching_mode' => 'home',
+            'budget_max' => 65,
+            'urgency' => 'urgent',
+            'schedule_notes' => 'Weekend mornings preferred',
+            'status' => 'new',
+        ]);
+
+        $this->withToken($token)->postJson("/api/requests/{$studentRequest->id}/generate-matches")
+            ->assertOk()
+            ->assertJsonCount(0, 'data');
+
+        $this->assertDatabaseHas('student_requests', [
+            'id' => $studentRequest->id,
+            'status' => 'no_matches',
+        ]);
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'matches.generated',
+            'auditable_type' => StudentRequest::class,
+            'auditable_id' => $studentRequest->id,
+        ]);
+    }
+
     public function test_message_draft_uses_mock_ai_fallback(): void
     {
         $token = $this->tokenForCoordinator();

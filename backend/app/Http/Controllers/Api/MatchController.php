@@ -27,6 +27,9 @@ class MatchController extends Controller
     {
         $request->update(['status' => 'matching']);
         $matches = $matchingService->generateForRequest($request);
+        $request->update([
+            'status' => $matches->isEmpty() ? 'no_matches' : 'matching',
+        ]);
         $auditLogger->record(request(), 'matches.generated', $request, [
             'match_count' => $matches->count(),
             'top_score' => $matches->max('total_score'),

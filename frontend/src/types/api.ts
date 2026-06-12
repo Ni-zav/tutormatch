@@ -15,7 +15,7 @@ export type StudentRequest = {
   requested_day_of_week: string | null;
   requested_time_block: string | null;
   urgency: 'low' | 'normal' | 'urgent';
-  status: string;
+  status: 'new' | 'matching' | 'no_matches' | 'shortlisted' | 'confirmed' | 'rejected' | 'closed' | 'needs_follow_up';
   schedule_notes: string;
   notes: string | null;
   assignment?: { id: number; title: string; status: string };

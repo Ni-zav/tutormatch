@@ -21,7 +21,7 @@ class StoreStudentRequestRequest extends FormRequest
             'requested_day_of_week' => ['nullable', 'string', 'max:20'],
             'requested_time_block' => ['nullable', 'string', 'max:40'],
             'urgency' => ['required', 'in:low,normal,urgent'],
-            'status' => ['nullable', 'in:new,matching,shortlisted,confirmed,rejected,closed,needs_follow_up'],
+            'status' => ['nullable', 'in:new,matching,no_matches,shortlisted,confirmed,rejected,closed,needs_follow_up'],
             'schedule_notes' => ['required', 'string', 'max:255'],
             'notes' => ['nullable', 'string'],
         ];
