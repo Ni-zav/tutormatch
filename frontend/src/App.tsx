@@ -1,5 +1,5 @@
-import { type FormEvent, useEffect, useMemo, useState } from 'react';
-import { api, getAuthToken, setAuthToken } from './api/client';
+import { type FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import { API_BASE, api, getAuthToken, setAuthToken } from './api/client';
 import type { Assignment, AuditLog, AuthUser, DashboardSummary, LevelRef, MatchResult, MessageDraft, StudentRequest, StudentRequestPayload, SubjectRef, Tutor } from './types/api';
 import './App.css';
 
@@ -24,15 +24,36 @@ function App() {
   const [loading, setLoading] = useState('Loading workspace');
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    void restoreSession();
+  const loadReferenceData = useCallback(async () => {
+    try {
+      const [subjectResponse, levelResponse] = await Promise.all([api.subjects(), api.levels()]);
+      setSubjects(subjectResponse.data);
+      setLevels(levelResponse.data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to load form options.');
+    }
   }, []);
 
-  useEffect(() => {
-    if (selectedRequestId) void loadRequestDetail(selectedRequestId);
-  }, [selectedRequestId]);
+  const loadInitialData = useCallback(async () => {
+    setLoading('Loading TutorMatch Ops data');
+    setError(null);
+    try {
+      const [summaryResponse, requestResponse, tutorResponse, assignmentResponse, auditResponse] = await Promise.all([api.summary(), api.requests(), api.tutors(), api.assignments(), api.auditLogs()]);
+      setSummary(summaryResponse);
+      setRequests(requestResponse.data);
+      setTutors(tutorResponse.data);
+      setAssignments(assignmentResponse.data);
+      setAuditLogs(auditResponse.data);
+      void loadReferenceData();
+      if (requestResponse.data[0]) setSelectedRequestId(requestResponse.data[0].id);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to load API data.');
+    } finally {
+      setLoading('');
+    }
+  }, [loadReferenceData]);
 
-  async function restoreSession() {
+  const restoreSession = useCallback(async () => {
     setLoading('Checking session');
     setError(null);
     try {
@@ -44,7 +65,28 @@ function App() {
       setUser(null);
       setLoading('');
     }
-  }
+  }, [loadInitialData]);
+
+  const loadRequestDetail = useCallback(async (id: number) => {
+    setError(null);
+    try {
+      const [requestResponse, matchResponse] = await Promise.all([api.request(id), api.matches(id)]);
+      setSelectedRequest(requestResponse.data);
+      setMatches(matchResponse.data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to load request detail.');
+    }
+  }, []);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void restoreSession();
+  }, [restoreSession]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (selectedRequestId) void loadRequestDetail(selectedRequestId);
+  }, [loadRequestDetail, selectedRequestId]);
 
   async function login(email: string, password: string) {
     setLoading('Signing in');
@@ -77,36 +119,6 @@ function App() {
     setAuditLogs([]);
     setAuditAction('');
     setTutors([]);
-  }
-
-  async function loadInitialData() {
-    setLoading('Loading TutorMatch Ops data');
-    setError(null);
-    try {
-      const [summaryResponse, requestResponse, tutorResponse, assignmentResponse, auditResponse] = await Promise.all([api.summary(), api.requests(), api.tutors(), api.assignments(), api.auditLogs()]);
-      setSummary(summaryResponse);
-      setRequests(requestResponse.data);
-      setTutors(tutorResponse.data);
-      setAssignments(assignmentResponse.data);
-      setAuditLogs(auditResponse.data);
-      void loadReferenceData();
-      if (requestResponse.data[0]) setSelectedRequestId(requestResponse.data[0].id);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unable to load API data.');
-    } finally {
-      setLoading('');
-    }
-  }
-
-  async function loadRequestDetail(id: number) {
-    setError(null);
-    try {
-      const [requestResponse, matchResponse] = await Promise.all([api.request(id), api.matches(id)]);
-      setSelectedRequest(requestResponse.data);
-      setMatches(matchResponse.data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unable to load request detail.');
-    }
   }
 
   async function generateMatches() {
@@ -155,16 +167,6 @@ function App() {
       setError(err instanceof Error ? err.message : 'Unable to create message draft.');
     } finally {
       setLoading('');
-    }
-  }
-
-  async function loadReferenceData() {
-    try {
-      const [subjectResponse, levelResponse] = await Promise.all([api.subjects(), api.levels()]);
-      setSubjects(subjectResponse.data);
-      setLevels(levelResponse.data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unable to load form options.');
     }
   }
 
@@ -241,7 +243,7 @@ function App() {
       const token = getAuthToken();
       const query = new URLSearchParams({ format: 'csv' });
       if (auditAction) query.set('action', auditAction);
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000/api'}/audit-logs?${query.toString()}`, {
+      const response = await fetch(`${API_BASE}/audit-logs?${query.toString()}`, {
         headers: {
           Accept: 'text/csv',
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -401,13 +403,8 @@ function NewRequest({ subjects, levels, onCreate }: { subjects: SubjectRef[]; le
     notes: '',
   });
 
-  useEffect(() => {
-    setForm((current) => ({
-      ...current,
-      subject_id: current.subject_id || subjects[0]?.id || 0,
-      level_id: current.level_id || levels[0]?.id || 0,
-    }));
-  }, [subjects, levels]);
+  const selectedSubjectId = form.subject_id || subjects[0]?.id || 0;
+  const selectedLevelId = form.level_id || levels[0]?.id || 0;
 
   function update<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
     setForm((current) => ({ ...current, [key]: value }));
@@ -418,8 +415,8 @@ function NewRequest({ subjects, levels, onCreate }: { subjects: SubjectRef[]; le
     onCreate({
       student_name: form.student_name,
       parent_name: form.parent_name || undefined,
-      subject_id: Number(form.subject_id),
-      level_id: Number(form.level_id),
+      subject_id: Number(selectedSubjectId),
+      level_id: Number(selectedLevelId),
       location: form.location,
       teaching_mode: form.teaching_mode,
       budget_min: form.budget_min ? Number(form.budget_min) : null,
@@ -439,8 +436,8 @@ function NewRequest({ subjects, levels, onCreate }: { subjects: SubjectRef[]; le
       <form className="request-form" onSubmit={submit}>
         <label>Student<input required value={form.student_name} onChange={(event) => update('student_name', event.target.value)} /></label>
         <label>Parent<input value={form.parent_name} onChange={(event) => update('parent_name', event.target.value)} /></label>
-        <label>Subject<select required value={form.subject_id} onChange={(event) => update('subject_id', Number(event.target.value))}>{subjects.map((subject) => <option key={subject.id} value={subject.id}>{subject.name}</option>)}</select></label>
-        <label>Level<select required value={form.level_id} onChange={(event) => update('level_id', Number(event.target.value))}>{levels.map((level) => <option key={level.id} value={level.id}>{level.name}</option>)}</select></label>
+        <label>Subject<select required value={selectedSubjectId} onChange={(event) => update('subject_id', Number(event.target.value))}>{subjects.map((subject) => <option key={subject.id} value={subject.id}>{subject.name}</option>)}</select></label>
+        <label>Level<select required value={selectedLevelId} onChange={(event) => update('level_id', Number(event.target.value))}>{levels.map((level) => <option key={level.id} value={level.id}>{level.name}</option>)}</select></label>
         <label>Location<input required value={form.location} onChange={(event) => update('location', event.target.value)} /></label>
         <label>Mode<select value={form.teaching_mode} onChange={(event) => update('teaching_mode', event.target.value as StudentRequestPayload['teaching_mode'])}><option value="home">home</option><option value="online">online</option><option value="hybrid">hybrid</option></select></label>
         <label>Budget Min<input type="number" min="0" value={form.budget_min} onChange={(event) => update('budget_min', event.target.value)} /></label>
