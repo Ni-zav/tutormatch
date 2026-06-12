@@ -22,6 +22,11 @@ class AuthController extends Controller
         $user = User::query()->where('email', $credentials['email'])->first();
 
         if (! $user || ! Hash::check($credentials['password'], $user->password)) {
+            $auditLogger->record($request, 'auth.login_failed', null, [
+                'email_hash' => hash('sha256', Str::lower($credentials['email'])),
+                'user_exists' => (bool) $user,
+            ]);
+
             throw ValidationException::withMessages([
                 'email' => ['The provided credentials are invalid.'],
             ]);

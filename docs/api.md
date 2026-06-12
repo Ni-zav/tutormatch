@@ -199,6 +199,6 @@ Tutor users can update `teaching_mode`, `location`, hourly rate range, `bio`, ac
 
 ## Audit Logging
 
-The API writes internal audit rows for login/logout, request creation, match generation, match workflow updates, message draft creation, tutor applications, application status updates, and withdrawals. Coordinator/admin users can review recent events through `GET /audit-logs`; tutor users cannot access audit logs.
+The API writes internal audit rows for login/logout, failed login attempts, request creation, public intake, match generation, match workflow updates, message draft creation, tutor applications, application status updates, and withdrawals. Coordinator/admin users can review recent events through `GET /audit-logs`; tutor users cannot access audit logs.
 
 Audit review supports `GET /audit-logs?action=request.created` for action filtering and `GET /audit-logs?format=csv` for a CSV export capped at 500 recent rows.

@@ -62,6 +62,46 @@ class TutorMatchApiTest extends TestCase
         $this->assertNotNull(User::where('email', 'coordinator@example.test')->first()?->api_token_last_used_at);
     }
 
+    public function test_failed_login_attempts_are_audited_without_raw_email(): void
+    {
+        User::create([
+            'name' => 'Coordinator',
+            'email' => 'failed-login@example.test',
+            'password' => 'password',
+            'role' => 'coordinator',
+        ]);
+
+        $this->postJson('/api/auth/login', [
+            'email' => 'failed-login@example.test',
+            'password' => 'wrong-password',
+        ])->assertUnprocessable();
+
+        $log = AuditLog::where('action', 'auth.login_failed')->first();
+
+        $this->assertNotNull($log);
+        $this->assertNull($log->user_id);
+        $this->assertTrue($log->metadata['user_exists']);
+        $this->assertSame(hash('sha256', 'failed-login@example.test'), $log->metadata['email_hash']);
+        $this->assertStringNotContainsString('failed-login@example.test', json_encode($log->metadata, JSON_THROW_ON_ERROR));
+        $this->assertStringNotContainsString('wrong-password', json_encode($log->metadata, JSON_THROW_ON_ERROR));
+    }
+
+    public function test_unknown_email_failed_login_is_audited_without_raw_email(): void
+    {
+        $this->postJson('/api/auth/login', [
+            'email' => 'unknown-login@example.test',
+            'password' => 'wrong-password',
+        ])->assertUnprocessable();
+
+        $log = AuditLog::where('action', 'auth.login_failed')->first();
+
+        $this->assertNotNull($log);
+        $this->assertNull($log->user_id);
+        $this->assertFalse($log->metadata['user_exists']);
+        $this->assertSame(hash('sha256', 'unknown-login@example.test'), $log->metadata['email_hash']);
+        $this->assertStringNotContainsString('unknown-login@example.test', json_encode($log->metadata, JSON_THROW_ON_ERROR));
+    }
+
     public function test_tutor_role_cannot_access_coordinator_dashboard(): void
     {
         $token = $this->tokenFor(User::create([

@@ -15,6 +15,7 @@ TutorMatch may handle student, parent, tutor, schedule, budget, location, and le
 - CORS origins are configured through `FRONTEND_ALLOWED_ORIGINS`.
 - Public health checks avoid secrets and personal data.
 - Structured audit logs record key operational events with user id, action, target object, compact metadata, IP address, and user agent.
+- Failed login attempts are audited with a hashed email identifier and no raw password or raw email address.
 - `tutormatch:prune-retention` can remove old audit logs, message drafts, and finalized requests using configured retention windows, and anonymize old inactive tutor profiles.
 
 ## Production Requirements Before Real Users
