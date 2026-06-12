@@ -123,6 +123,14 @@ Use the returned `data.token` as `Authorization: Bearer <token>`.
 }
 ```
 
+## Dashboard Summary
+
+`GET /dashboard/summary` includes high-level coordinator queue counts:
+
+- `requests.total`, `requests.new`, `requests.urgent`, `requests.no_matches`, `requests.needs_follow_up`
+- `applications.total`, `applications.pending`
+- `matches.generated`, `matches.average_score`, `matches.shortlisted`, `matches.contacted`
+
 ## Match Response Shape
 
 Generating matches sets the request status to `matching` when candidates are found, or `no_matches` when the database prefilter returns no eligible tutors.

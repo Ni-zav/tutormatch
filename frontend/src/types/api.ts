@@ -55,10 +55,10 @@ export type MatchResult = {
 };
 
 export type DashboardSummary = {
-  requests: { total: number; new: number; urgent: number };
+  requests: { total: number; new: number; urgent: number; no_matches: number; needs_follow_up: number };
   tutors: { total: number };
-  applications: { total: number };
-  matches: { generated: number; average_score: number };
+  applications: { total: number; pending: number };
+  matches: { generated: number; average_score: number; shortlisted: number; contacted: number };
 };
 
 export type AuditLog = {

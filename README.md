@@ -103,7 +103,7 @@ Current local verification:
 
 ## Features
 
-- Coordinator dashboard summary
+- Coordinator dashboard summary with urgent, no-match, follow-up, and pending application queues
 - Student request creation, list, and detail view
 - Public intake endpoint for website or WordPress request forms
 - Tutor profile list

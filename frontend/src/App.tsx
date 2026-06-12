@@ -364,10 +364,10 @@ function Dashboard({ summary, topMatch }: { summary: DashboardSummary | null; to
   if (!summary) return <EmptyState text="Start the backend API to load the dashboard." />;
   return (
     <div className="grid four">
-      <Metric label="Open requests" value={summary.requests.total} detail={`${summary.requests.urgent} urgent`} />
-      <Metric label="Tutor pool" value={summary.tutors.total} detail="Seeded demo tutors" />
-      <Metric label="Applications" value={summary.applications.total} detail="Tutor-side activity" />
-      <Metric label="Avg match" value={summary.matches.average_score || 0} detail={topMatch ? `Top: ${topMatch.tutor.name}` : 'Generate matches'} />
+      <Metric label="Open requests" value={summary.requests.total} detail={`${summary.requests.urgent} urgent - ${summary.requests.no_matches} no match`} />
+      <Metric label="Follow-up queue" value={summary.requests.needs_follow_up} detail={`${summary.matches.contacted} contacted matches`} />
+      <Metric label="Applications" value={summary.applications.pending} detail={`${summary.applications.total} total tutor responses`} />
+      <Metric label="Avg match" value={summary.matches.average_score || 0} detail={topMatch ? `Top: ${topMatch.tutor.name}` : `${summary.matches.shortlisted} shortlisted`} />
     </div>
   );
 }

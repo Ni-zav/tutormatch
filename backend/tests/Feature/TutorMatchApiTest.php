@@ -343,6 +343,61 @@ class TutorMatchApiTest extends TestCase
             ->assertJsonPath('data.0.name', 'Sec 4 O-Level');
     }
 
+    public function test_dashboard_summary_includes_operational_queue_counts(): void
+    {
+        $token = $this->tokenForCoordinator();
+        [$studentRequest, $tutor] = $this->matchFixture();
+        $studentRequest->update([
+            'status' => 'needs_follow_up',
+            'urgency' => 'urgent',
+        ]);
+        $noMatchRequest = StudentRequest::create([
+            'student_name' => 'No Match Student',
+            'subject_id' => $studentRequest->subject_id,
+            'level_id' => $studentRequest->level_id,
+            'location' => 'Bishan',
+            'teaching_mode' => 'home',
+            'budget_max' => 65,
+            'urgency' => 'normal',
+            'schedule_notes' => 'Flexible',
+            'status' => 'no_matches',
+        ]);
+        $assignment = Assignment::create([
+            'student_request_id' => $studentRequest->id,
+            'title' => 'Sec 4 O-Level Chemistry in Bishan',
+            'status' => 'open',
+            'published_at' => now(),
+        ]);
+        $assignment->applications()->create([
+            'tutor_id' => $tutor->id,
+            'status' => 'applied',
+            'message' => 'Available.',
+            'applied_at' => now(),
+        ]);
+        MatchResult::create([
+            'student_request_id' => $studentRequest->id,
+            'tutor_id' => $tutor->id,
+            'total_score' => 90,
+            'score_breakdown' => ['subject' => 30],
+            'deterministic_explanation' => 'Strong fit.',
+            'status' => 'shortlisted',
+            'outreach_status' => 'contacted',
+            'generated_at' => now(),
+        ]);
+
+        $this->withToken($token)
+            ->getJson('/api/dashboard/summary')
+            ->assertOk()
+            ->assertJsonPath('requests.no_matches', 1)
+            ->assertJsonPath('requests.needs_follow_up', 1)
+            ->assertJsonPath('requests.urgent', 1)
+            ->assertJsonPath('applications.pending', 1)
+            ->assertJsonPath('matches.shortlisted', 1)
+            ->assertJsonPath('matches.contacted', 1);
+
+        $this->assertDatabaseHas('student_requests', ['id' => $noMatchRequest->id, 'status' => 'no_matches']);
+    }
+
     public function test_request_can_be_created_and_match_can_be_generated(): void
     {
         $token = $this->tokenForCoordinator();
