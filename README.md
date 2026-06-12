@@ -88,6 +88,7 @@ php artisan test
 
 ```bash
 cd frontend
+npm run lint
 npm run build
 ```
 
@@ -96,7 +97,7 @@ Current local verification:
 - Backend migrations and seed data should be verified with `php artisan migrate:fresh --seed` when PHP is available.
 - `php artisan route:list --path=api` should show the protected auth, request, matching, tutor, application, and message draft routes.
 - `php artisan test` covers auth, matching, workflow status updates, and AI mock behavior when PHP is available.
-- `npm run build` passes for the frontend.
+- `npm run lint` and `npm run build` pass for the frontend.
 - Mobile TypeScript validation passes with `npm run typecheck`.
 - `npm install` in `mobile/` currently reports 10 moderate audit findings from the Expo dependency tree; review with `npm audit` before production use.
 
@@ -192,7 +193,7 @@ More detail is in:
 ## Production Next Steps
 
 - Replace the demo bearer-token login with Sanctum or another production-grade token/session flow before real users.
-- Add audit log review/export screens for administrators.
+- Define production audit review/export policy and alerting thresholds.
 - Add queue-based match generation for high-volume workloads.
 - Add privacy controls and prompt redaction before real AI provider use.
 - Tune scoring weights with placement and retention data.

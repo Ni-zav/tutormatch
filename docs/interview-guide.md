@@ -18,5 +18,5 @@ My strongest background is full-stack TypeScript, backend/API/data workflows, au
 - Which indexes matter for high-volume assignment operations?
 - How would auth and roles be added?
 - How would WordPress fit? Public forms or CMS content could feed the same API.
-- How would Expo fit? The proof-of-concept includes a mock tutor assignment feed, filters, detail, and bulk apply workflow.
+- How would Expo fit? The proof-of-concept includes an authenticated tutor assignment feed backed by the Laravel API, filters, detail, apply/withdraw actions, and basic profile updates.
 - How would you measure matching quality? Placement rate, acceptance rate, response time, parent satisfaction, retention, and coordinator override rate.

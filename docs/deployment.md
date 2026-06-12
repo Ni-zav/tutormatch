@@ -99,4 +99,4 @@ Keep the previous image or commit available. If a deploy fails after migrations,
 - Move queues to Redis when database queue latency becomes visible.
 - Replace demo bearer tokens with Sanctum or another production-grade auth flow before real users.
 - Add object storage only when uploaded documents or media become part of the workflow.
-- Add audit logs before production use with real student, parent, or tutor data.
+- Add alerting and review procedures around audit logs before production use with real student, parent, or tutor data.
