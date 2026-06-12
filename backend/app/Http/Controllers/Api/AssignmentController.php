@@ -21,7 +21,14 @@ class AssignmentController extends Controller
                     ? $query->where('tutor_id', $tutorId)
                     : $query->with('tutor')->latest('applied_at'),
             ])
-            ->where('status', 'open')
+            ->when($user->role === 'tutor', function ($query) use ($tutorId): void {
+                $query->where(function ($query) use ($tutorId): void {
+                    $query->where('status', 'open')
+                        ->orWhereHas('applications', fn ($query) => $query->where('tutor_id', $tutorId));
+                });
+            }, function ($query): void {
+                $query->where('status', 'open');
+            })
             ->whereNotNull('published_at')
             ->latest('published_at')
             ->paginate((int) $request->integer('per_page', 10));

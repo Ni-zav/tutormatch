@@ -177,7 +177,7 @@ Message draft responses include `generated_by`, `prompt_version`, `fallback_used
 
 ## Tutor Assignment Feed
 
-`GET /assignments` returns open published assignments. For tutor users, each row includes that tutor's current `application_status` when they have already applied and does not expose other tutor applications. For coordinator/admin users, each row includes an `applications` array with tutor id, tutor name, status, message, and applied timestamp for review.
+`GET /assignments` returns open published assignments. For tutor users, it also keeps assignments where that tutor already has an application, so final statuses such as `accepted`, `rejected`, or `withdrawn` remain visible after coordinator review. Each tutor row includes that tutor's current `application_status` and does not expose other tutor applications. For coordinator/admin users, each row includes an `applications` array with tutor id, tutor name, status, message, and applied timestamp for review.
 
 Tutor users do not need to send `tutor_id` when applying or withdrawing. If a tutor sends a different `tutor_id`, the API still uses the authenticated tutor profile.
 

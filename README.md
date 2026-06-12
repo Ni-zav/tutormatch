@@ -71,7 +71,7 @@ npm install
 npm run start
 ```
 
-The mobile app logs in with the seeded tutor account, reads open assignments from the backend, lets the tutor apply or withdraw interest, and can update basic profile and availability data. If the API runs somewhere else, start Expo with:
+The mobile app logs in with the seeded tutor account, reads open assignments and the tutor's own application statuses from the backend, lets the tutor apply or withdraw interest, and can update basic profile and availability data. If the API runs somewhere else, start Expo with:
 
 ```bash
 EXPO_PUBLIC_API_BASE_URL=http://127.0.0.1:8000/api npm run start
