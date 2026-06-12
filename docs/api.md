@@ -133,6 +133,8 @@ Message draft responses include `generated_by`, `prompt_version`, `fallback_used
 
 Tutor users do not need to send `tutor_id` when applying or withdrawing. If a tutor sends a different `tutor_id`, the API still uses the authenticated tutor profile.
 
+Tutor application submit/withdraw routes are rate-limited to reduce accidental repeat submissions and scripted workflow abuse.
+
 Coordinator/admin users can update application status with:
 
 ```json

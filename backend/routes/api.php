@@ -28,7 +28,7 @@ Route::middleware('api.token:admin,coordinator,tutor')->group(function (): void 
 
 Route::middleware('api.token:tutor')->group(function (): void {
     Route::get('/tutor/profile', [TutorProfileController::class, 'show']);
-    Route::patch('/tutor/profile', [TutorProfileController::class, 'update']);
+    Route::patch('/tutor/profile', [TutorProfileController::class, 'update'])->middleware('throttle:30,1');
 });
 
 Route::middleware('api.token:admin,coordinator')->group(function (): void {
@@ -42,11 +42,11 @@ Route::middleware('api.token:admin,coordinator')->group(function (): void {
     Route::apiResource('tutors', TutorController::class)->only(['index', 'show']);
     Route::post('/matches/{matchResult}/explain', [MatchController::class, 'explain'])->middleware('throttle:30,1');
     Route::patch('/matches/{matchResult}/workflow', [MatchController::class, 'updateWorkflow']);
-    Route::patch('/applications/{application}', [AssignmentApplicationController::class, 'update']);
+    Route::patch('/applications/{application}', [AssignmentApplicationController::class, 'update'])->middleware('throttle:30,1');
     Route::post('/message-drafts', MessageDraftController::class)->middleware('throttle:30,1');
 });
 
 Route::post('/assignments/{assignment}/applications', [AssignmentApplicationController::class, 'store'])
-    ->middleware('api.token:admin,coordinator,tutor');
+    ->middleware(['api.token:admin,coordinator,tutor', 'throttle:20,1']);
 Route::delete('/assignments/{assignment}/applications', [AssignmentApplicationController::class, 'destroy'])
-    ->middleware('api.token:admin,coordinator,tutor');
+    ->middleware(['api.token:admin,coordinator,tutor', 'throttle:20,1']);

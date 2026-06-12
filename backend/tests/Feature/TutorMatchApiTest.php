@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
 class TutorMatchApiTest extends TestCase
@@ -816,6 +817,29 @@ class TutorMatchApiTest extends TestCase
             'auditable_type' => Tutor::class,
             'auditable_id' => $tutor->id,
         ]);
+    }
+
+    public function test_state_changing_application_routes_are_rate_limited(): void
+    {
+        $routes = collect(Route::getRoutes());
+        $expectedRoutes = [
+            ['PATCH', 'api/tutor/profile'],
+            ['POST', 'api/assignments/{assignment}/applications'],
+            ['DELETE', 'api/assignments/{assignment}/applications'],
+            ['PATCH', 'api/applications/{application}'],
+        ];
+
+        foreach ($expectedRoutes as [$method, $uri]) {
+            $route = $routes->first(
+                fn ($route) => $route->uri() === $uri && in_array($method, $route->methods(), true)
+            );
+
+            $this->assertNotNull($route, "{$method} {$uri} route should exist.");
+            $this->assertTrue(
+                collect($route->middleware())->contains(fn (string $middleware) => str_starts_with($middleware, 'throttle:')),
+                "{$method} {$uri} route should be rate limited."
+            );
+        }
     }
 
     public function test_coordinator_cannot_use_tutor_self_service_profile_route(): void
