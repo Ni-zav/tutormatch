@@ -133,7 +133,16 @@ Use the returned `data.token` as `Authorization: Bearer <token>`.
 
 ## Match Response Shape
 
-Generating matches sets the request status to `matching` when candidates are found, or `no_matches` when the database prefilter returns no eligible tutors.
+Generating matches sets the request status to `matching` when candidates are found, or `no_matches` when the database prefilter returns no eligible tutors. The default call runs synchronously and returns match rows. High-volume callers can use `POST /requests/{id}/generate-matches?async=true` to queue generation and receive:
+
+```json
+{
+  "data": {
+    "status": "queued",
+    "student_request_id": 123
+  }
+}
+```
 
 ```json
 {

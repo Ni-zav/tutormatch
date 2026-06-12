@@ -111,6 +111,7 @@ Current local verification:
 - Database candidate prefilter before scoring
 - Factor breakdown: subject, level, location/mode, budget, availability, tutor type, history
 - Coordinator workflow actions for shortlist, contacted, follow-up, confirmed, and rejected match states
+- Optional queue-backed match generation for higher-volume requests
 - Structured audit logs for auth, request creation, match generation, workflow updates, message drafts, and tutor applications
 - Coordinator/admin audit trail review with action filtering and CSV export
 - Coordinator application review view with accept/reject actions that can finalize an assignment
@@ -197,7 +198,7 @@ More detail is in:
 
 - Replace the demo bearer-token login with Sanctum or another production-grade token/session flow before real users.
 - Define production audit review/export policy and alerting thresholds.
-- Add queue-based match generation for high-volume workloads.
+- Monitor queue latency and split match generation workers if volume grows.
 - Add privacy controls and prompt redaction before real AI provider use.
 - Tune scoring weights with placement and retention data.
 - Connect WordPress or other public forms to the public intake endpoint.

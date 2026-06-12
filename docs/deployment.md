@@ -65,6 +65,8 @@ Run one queue worker for now:
 php artisan queue:work --tries=3 --timeout=60
 ```
 
+Queued match generation uses the same database queue. Keep the worker supervised in production; otherwise `POST /api/requests/{id}/generate-matches?async=true` will leave requests in `matching` until a worker processes the job.
+
 Run the retention cleanup manually first:
 
 ```bash

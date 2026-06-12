@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateMatchWorkflowRequest;
 use App\Http\Resources\MatchResultResource;
+use App\Jobs\GenerateMatchesForRequest;
 use App\Models\MatchResult;
 use App\Models\StudentRequest;
 use App\Services\AuditLogger;
@@ -25,6 +26,18 @@ class MatchController extends Controller
 
     public function generate(StudentRequest $request, TutorMatchingService $matchingService, AuditLogger $auditLogger)
     {
+        if (request()->boolean('async')) {
+            $request->update(['status' => 'matching']);
+            GenerateMatchesForRequest::dispatch($request->id, request()->user()?->id);
+
+            return response()->json([
+                'data' => [
+                    'status' => 'queued',
+                    'student_request_id' => $request->id,
+                ],
+            ], 202);
+        }
+
         $request->update(['status' => 'matching']);
         $matches = $matchingService->generateForRequest($request);
         $request->update([

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Jobs\GenerateMatchesForRequest;
 use App\Models\Assignment;
 use App\Models\AuditLog;
 use App\Models\Level;
@@ -15,6 +16,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
@@ -597,6 +599,28 @@ class TutorMatchApiTest extends TestCase
             'action' => 'matches.generated',
             'auditable_type' => StudentRequest::class,
             'auditable_id' => $studentRequest->id,
+        ]);
+    }
+
+    public function test_match_generation_can_be_queued_for_async_processing(): void
+    {
+        Queue::fake();
+        $token = $this->tokenForCoordinator();
+        [$studentRequest] = $this->matchFixture();
+
+        $this->withToken($token)
+            ->postJson("/api/requests/{$studentRequest->id}/generate-matches?async=true")
+            ->assertAccepted()
+            ->assertJsonPath('data.status', 'queued')
+            ->assertJsonPath('data.student_request_id', $studentRequest->id);
+
+        Queue::assertPushed(
+            GenerateMatchesForRequest::class,
+            fn (GenerateMatchesForRequest $job) => $job->studentRequestId === $studentRequest->id
+        );
+        $this->assertDatabaseHas('student_requests', [
+            'id' => $studentRequest->id,
+            'status' => 'matching',
         ]);
     }
 
