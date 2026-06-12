@@ -28,7 +28,7 @@ TutorMatch may handle student, parent, tutor, schedule, budget, location, and le
 
 ## AI Data Handling
 
-AI is optional and assistive. Do not send unnecessary personal data to an AI provider. Prefer match IDs, coarse request details, and redacted notes where possible. Message drafts must remain coordinator-reviewed and must not be auto-sent by the system.
+AI is optional and assistive. Do not send unnecessary personal data to an AI provider. The real provider prompt path sends coarse request details and tutor attributes, but removes student names, parent names, tutor names, and free-form request notes. Message drafts must remain coordinator-reviewed and must not be auto-sent by the system.
 
 When a real AI provider is enabled, log enough metadata to debug failures, such as provider, model, prompt version, and fallback status. Avoid storing full prompts if they contain sensitive student, parent, tutor, budget, or location details.
 

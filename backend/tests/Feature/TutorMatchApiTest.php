@@ -475,6 +475,77 @@ class TutorMatchApiTest extends TestCase
         Http::assertSentCount(1);
     }
 
+    public function test_openai_message_draft_prompt_redacts_personal_names_and_notes(): void
+    {
+        config([
+            'services.ai.provider' => 'openai',
+            'services.ai.openai_api_key' => 'test-key',
+            'services.ai.openai_model' => 'test-model',
+            'services.ai.timeout_seconds' => 1,
+        ]);
+        $capturedPrompt = null;
+        Http::fake(function ($request) use (&$capturedPrompt) {
+            $payload = $request->data();
+            $capturedPrompt = json_decode($payload['messages'][1]['content'], true);
+
+            return Http::response([
+                'choices' => [
+                    [
+                        'message' => [
+                            'content' => json_encode([
+                                'audience' => 'client',
+                                'channel' => 'whatsapp',
+                                'body' => 'Hi, we found a suitable tutor option for this request. Please review before we proceed.',
+                            ]),
+                        ],
+                    ],
+                ],
+            ]);
+        });
+        $token = $this->tokenForCoordinator();
+        $subject = Subject::create(['name' => 'Chemistry']);
+        $level = Level::create(['name' => 'Sec 4 O-Level']);
+        $studentRequest = StudentRequest::create([
+            'student_name' => 'Demo Student A',
+            'parent_name' => 'Mrs Tan',
+            'subject_id' => $subject->id,
+            'level_id' => $level->id,
+            'location' => 'Bishan',
+            'teaching_mode' => 'home',
+            'budget_max' => 65,
+            'urgency' => 'urgent',
+            'schedule_notes' => 'Private note mentioning Mrs Tan prefers weekends.',
+            'notes' => 'Sensitive coordinator note about Demo Student A.',
+        ]);
+        $tutor = Tutor::create([
+            'name' => 'Daniel Lim',
+            'tutor_type' => 'ex_moe',
+            'teaching_mode' => 'hybrid',
+            'location' => 'Bishan',
+            'hourly_rate_min' => 55,
+            'hourly_rate_max' => 70,
+        ]);
+
+        $this->withToken($token)->postJson('/api/message-drafts', [
+            'student_request_id' => $studentRequest->id,
+            'tutor_id' => $tutor->id,
+            'audience' => 'client',
+            'channel' => 'whatsapp',
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.generated_by', 'openai')
+            ->assertJsonPath('data.fallback_used', false)
+            ->assertJsonPath('data.generation_metadata.prompt_redaction', 'personal_names_and_freeform_notes_removed');
+
+        $this->assertIsArray($capturedPrompt);
+        $promptJson = json_encode($capturedPrompt, JSON_THROW_ON_ERROR);
+        $this->assertStringNotContainsString('Demo Student A', $promptJson);
+        $this->assertStringNotContainsString('Mrs Tan', $promptJson);
+        $this->assertStringNotContainsString('Daniel Lim', $promptJson);
+        $this->assertStringNotContainsString('Sensitive coordinator note', $promptJson);
+        $this->assertStringNotContainsString('Private note', $promptJson);
+    }
+
     public function test_coordinator_can_update_match_workflow_status(): void
     {
         $token = $this->tokenForCoordinator();

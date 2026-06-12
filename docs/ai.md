@@ -16,8 +16,9 @@ AI is behind the `AiAssistant` interface. The default implementation binds to `M
 - Generated messages should be reviewed by a human coordinator.
 - Production prompts should instruct the model to use only provided facts, avoid guarantees, and return structured JSON.
 - The app stores provider/debug metadata, not full prompt payloads.
+- Real provider prompts remove student names, parent names, tutor names, and free-form request notes before sending context externally.
 - Real provider calls use `AI_TIMEOUT_SECONDS` and fall back to mock output on errors or invalid JSON.
 
 ## Production Next Steps
 
-Before real use, add stronger prompt redaction, audit logs for generation requests, and provider-specific monitoring.
+Before real use, add provider-specific monitoring, prompt sampling reviews with redacted fixtures, and stricter data retention controls for generated drafts.

@@ -20,15 +20,18 @@ class OpenAiAssistant implements AiAssistant
 
         $prompt = [
             'prompt_version' => 'match-explain-v1',
-            'task' => 'Explain this tuition tutor match for a coordinator. Use only provided facts. Return concise JSON fields: summary, strengths, risks, coordinator_note.',
+            'task' => 'Explain this tuition tutor match for a coordinator. Use only provided facts. Do not include personal names. Return concise JSON fields: summary, strengths, risks, coordinator_note.',
             'request' => $matchResult->studentRequest->only(['location', 'teaching_mode', 'budget_min', 'budget_max', 'preferred_tutor_type', 'requested_day_of_week', 'requested_time_block', 'urgency']),
             'subject' => $matchResult->studentRequest->subject?->name,
             'level' => $matchResult->studentRequest->level?->name,
-            'tutor' => $matchResult->tutor->only(['name', 'tutor_type', 'teaching_mode', 'location', 'hourly_rate_min', 'hourly_rate_max', 'years_experience']),
+            'tutor' => $this->redactedTutorContext($matchResult->tutor),
             'score' => [
                 'total' => $matchResult->total_score,
                 'breakdown' => $matchResult->score_breakdown,
-                'deterministic_explanation' => $matchResult->deterministic_explanation,
+                'deterministic_explanation' => $this->redactKnownNames(
+                    $matchResult->deterministic_explanation,
+                    [$matchResult->tutor->name]
+                ),
             ],
         ];
 
@@ -49,13 +52,13 @@ class OpenAiAssistant implements AiAssistant
 
         $prompt = [
             'prompt_version' => 'message-draft-v1',
-            'task' => 'Draft a short WhatsApp message for a tuition coordinator. Use only provided facts. Do not promise outcomes. Return JSON fields: audience, channel, body.',
+            'task' => 'Draft a short WhatsApp message for a tuition coordinator. Use only provided facts. Do not include personal names. Do not promise outcomes. Return JSON fields: audience, channel, body.',
             'audience' => $audience,
             'channel' => $channel,
-            'request' => $request->only(['student_name', 'parent_name', 'location', 'teaching_mode', 'budget_min', 'budget_max', 'schedule_notes', 'notes']),
+            'request' => $request->only(['location', 'teaching_mode', 'budget_min', 'budget_max', 'requested_day_of_week', 'requested_time_block', 'urgency']),
             'subject' => $request->subject?->name,
             'level' => $request->level?->name,
-            'tutor' => $tutor?->only(['name', 'tutor_type', 'teaching_mode', 'location', 'hourly_rate_min', 'hourly_rate_max', 'years_experience']),
+            'tutor' => $tutor ? $this->redactedTutorContext($tutor) : null,
         ];
 
         return $this->completeJson($prompt) ?? [
@@ -98,10 +101,30 @@ class OpenAiAssistant implements AiAssistant
                 'generation_metadata' => [
                     'provider' => 'openai',
                     'model' => config('services.ai.openai_model'),
+                    'prompt_redaction' => 'personal_names_and_freeform_notes_removed',
                 ],
             ] : null;
         } catch (Throwable) {
             return null;
         }
+    }
+
+    private function redactedTutorContext(Tutor $tutor): array
+    {
+        return [
+            'label' => 'Tutor profile',
+            ...$tutor->only(['tutor_type', 'teaching_mode', 'location', 'hourly_rate_min', 'hourly_rate_max', 'years_experience']),
+        ];
+    }
+
+    private function redactKnownNames(string $value, array $names): string
+    {
+        foreach ($names as $name) {
+            if (is_string($name) && $name !== '') {
+                $value = str_replace($name, 'the tutor', $value);
+            }
+        }
+
+        return $value;
     }
 }
