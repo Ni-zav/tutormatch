@@ -13,6 +13,8 @@ Most workflow routes require a bearer token from `POST /auth/login`. Tokens are 
 | Method | Route | Purpose |
 |---|---|---|
 | GET | `/health` | API health check |
+| GET | `/intake/options` | Public subject and level options for intake forms |
+| POST | `/intake/requests` | Public rate-limited student request intake |
 | POST | `/auth/login` | Issue bearer token for a valid demo user |
 | GET | `/auth/me` | Current authenticated user |
 | POST | `/auth/logout` | Revoke the current bearer token |
@@ -52,6 +54,42 @@ Most workflow routes require a bearer token from `POST /auth/login`. Tokens are 
 ```
 
 If the database check fails, the endpoint returns `503` with `status = degraded` and `checks.database = error`.
+
+## Public Intake Example
+
+`GET /intake/options` is unauthenticated and rate-limited. It returns only subject and level IDs/names for public forms.
+
+`POST /intake/requests` is unauthenticated and rate-limited for website or WordPress forms. It creates a persisted student request and open assignment, writes an audit event, requires `privacy_acknowledged`, and returns only a limited confirmation payload.
+
+```json
+{
+  "student_name": "Demo Student A",
+  "parent_name": "Mrs Tan",
+  "subject_id": 1,
+  "level_id": 4,
+  "location": "Bishan",
+  "teaching_mode": "home",
+  "budget_min": 45,
+  "budget_max": 65,
+  "requested_day_of_week": "saturday",
+  "requested_time_block": "morning",
+  "schedule_notes": "Weekend mornings preferred",
+  "privacy_acknowledged": true
+}
+```
+
+Response:
+
+```json
+{
+  "data": {
+    "id": 123,
+    "status": "new",
+    "assignment_id": 456,
+    "submitted_at": "2026-06-12T00:00:00.000000Z"
+  }
+}
+```
 
 ## Login Example
 

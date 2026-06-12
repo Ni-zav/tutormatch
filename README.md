@@ -105,6 +105,7 @@ Current local verification:
 
 - Coordinator dashboard summary
 - Student request creation, list, and detail view
+- Public intake endpoint for website or WordPress request forms
 - Tutor profile list
 - Deterministic tutor matching score
 - Database candidate prefilter before scoring
@@ -124,6 +125,8 @@ Current local verification:
 ## API Highlights
 
 - `GET /api/health`
+- `GET /api/intake/options`
+- `POST /api/intake/requests`
 - `POST /api/auth/login`
 - `GET /api/auth/me`
 - `POST /api/auth/logout`
@@ -197,7 +200,7 @@ More detail is in:
 - Add queue-based match generation for high-volume workloads.
 - Add privacy controls and prompt redaction before real AI provider use.
 - Tune scoring weights with placement and retention data.
-- Add WordPress intake integration for public request forms.
+- Connect WordPress or other public forms to the public intake endpoint.
 - Build a fuller Expo tutor app for status notifications and richer profile editing.
 
 ## AI Configuration

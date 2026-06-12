@@ -397,6 +397,81 @@ class TutorMatchApiTest extends TestCase
         ]);
     }
 
+    public function test_public_intake_can_create_persisted_request_with_limited_response(): void
+    {
+        $subject = Subject::create(['name' => 'Chemistry']);
+        $level = Level::create(['name' => 'Sec 4 O-Level']);
+
+        $response = $this->postJson('/api/intake/requests', [
+            'student_name' => 'Public Student',
+            'parent_name' => 'Public Parent',
+            'subject_id' => $subject->id,
+            'level_id' => $level->id,
+            'location' => 'Bishan',
+            'teaching_mode' => 'home',
+            'budget_min' => 45,
+            'budget_max' => 65,
+            'requested_day_of_week' => 'saturday',
+            'requested_time_block' => 'morning',
+            'schedule_notes' => 'Weekend mornings preferred',
+            'notes' => 'Submitted from public intake.',
+            'privacy_acknowledged' => true,
+        ])->assertCreated();
+
+        $requestId = $response->json('data.id');
+        $response->assertJsonPath('data.status', 'new')
+            ->assertJsonMissingPath('data.student_name')
+            ->assertJsonMissingPath('data.parent_name');
+
+        $this->assertDatabaseHas('student_requests', [
+            'id' => $requestId,
+            'student_name' => 'Public Student',
+            'parent_name' => 'Public Parent',
+            'status' => 'new',
+        ]);
+        $this->assertDatabaseHas('assignments', [
+            'student_request_id' => $requestId,
+            'title' => 'Sec 4 O-Level Chemistry in Bishan',
+            'status' => 'open',
+        ]);
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'public_intake.created',
+            'auditable_type' => StudentRequest::class,
+            'auditable_id' => $requestId,
+        ]);
+    }
+
+    public function test_public_intake_options_expose_only_reference_ids_and_names(): void
+    {
+        $subject = Subject::create(['name' => 'Chemistry']);
+        $level = Level::create(['name' => 'Sec 4 O-Level']);
+
+        $this->getJson('/api/intake/options')
+            ->assertOk()
+            ->assertJsonPath('data.subjects.0.id', $subject->id)
+            ->assertJsonPath('data.subjects.0.name', 'Chemistry')
+            ->assertJsonPath('data.levels.0.id', $level->id)
+            ->assertJsonPath('data.levels.0.name', 'Sec 4 O-Level');
+    }
+
+    public function test_public_intake_requires_privacy_acknowledgement(): void
+    {
+        $subject = Subject::create(['name' => 'Chemistry']);
+        $level = Level::create(['name' => 'Sec 4 O-Level']);
+
+        $this->postJson('/api/intake/requests', [
+            'student_name' => 'Public Student',
+            'subject_id' => $subject->id,
+            'level_id' => $level->id,
+            'location' => 'Bishan',
+            'teaching_mode' => 'home',
+            'budget_max' => 65,
+            'schedule_notes' => 'Weekend mornings preferred',
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['privacy_acknowledged']);
+    }
+
     public function test_match_generation_marks_request_when_no_candidates_are_available(): void
     {
         $token = $this->tokenForCoordinator();

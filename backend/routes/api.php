@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\MatchController;
 use App\Http\Controllers\Api\MessageDraftController;
+use App\Http\Controllers\Api\PublicIntakeController;
 use App\Http\Controllers\Api\ReferenceDataController;
 use App\Http\Controllers\Api\StudentRequestController;
 use App\Http\Controllers\Api\TutorProfileController;
@@ -16,6 +17,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/health', HealthController::class);
 Route::post('/auth/login', [AuthController::class, 'login'])->middleware('throttle:10,1');
+Route::get('/intake/options', [PublicIntakeController::class, 'options'])->middleware('throttle:30,1');
+Route::post('/intake/requests', [PublicIntakeController::class, 'store'])->middleware('throttle:5,1');
 
 Route::middleware('api.token:admin,coordinator,tutor')->group(function (): void {
     Route::get('/auth/me', [AuthController::class, 'me']);
