@@ -4,6 +4,8 @@ COPY composer.json composer.lock ./
 RUN composer install --no-dev --prefer-dist --no-interaction --no-progress --no-scripts
 
 FROM php:8.3.36-cli
+# PHP advisory (CVE-2026-115560): disable session upload progress until patched.
+RUN printf 'session.upload_progress.enabled=0\n' > /usr/local/etc/php/conf.d/zz-security.ini
 WORKDIR /app
 
 RUN apt-get update \
